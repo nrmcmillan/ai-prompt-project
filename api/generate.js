@@ -3,8 +3,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { category, topic, tone } = req.body;
-  const prompt = `Write 3 different engaging ${category}s about "${topic}"${tone ? ` in a ${tone} tone` : ''}. Each one should be distinct and useful.`;
+  const { category, topic, tone, count } = req.body;
+  const safeCount = Math.max(1, Math.min(5, parseInt(count)));
+
+  const prompt = `Write ${safeCount} different engaging ${category}s about "${topic}"${tone ? ` in a ${tone} tone` : ''}. Number each one clearly.`;
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -26,11 +28,10 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (response.ok) {
-      // Split multiple prompts if returned as one string
       const outputs = data.choices[0].message.content
-        .split(/\n(?=\d+\.)/) // split on "1. ", "2. ", etc
+        .split(/\n(?=\d+\.)/)
         .map(str => str.trim())
-        .filter(str => str);
+        .filter(Boolean);
 
       res.status(200).json({ output: outputs });
     } else {

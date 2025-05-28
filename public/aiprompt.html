@@ -95,6 +95,9 @@
     <label for="tone">Tone (optional):</label>
     <input type="text" id="tone" placeholder="e.g., friendly, persuasive" />
 
+    <label for="count">Number of variations (1–5):</label>
+    <input type="number" id="count" min="1" max="5" value="3" />
+
     <button onclick="generate()">Generate</button>
 
     <div class="output" id="output">AI-generated content will appear here...</div>
@@ -105,6 +108,7 @@
       const category = document.getElementById("category").value;
       const topic = document.getElementById("topic").value;
       const tone = document.getElementById("tone").value;
+      const count = Math.max(1, Math.min(5, parseInt(document.getElementById("count").value)));
       const outputDiv = document.getElementById("output");
 
       if (!topic) {
@@ -118,7 +122,7 @@
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ category, topic, tone }),
+          body: JSON.stringify({ category, topic, tone, count }),
         });
 
         const data = await res.json();
