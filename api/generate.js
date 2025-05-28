@@ -1,6 +1,4 @@
-const fetch = require('node-fetch');
-
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
@@ -30,10 +28,11 @@ module.exports = async (req, res) => {
     if (response.ok) {
       res.status(200).json({ result: data.choices[0].text.trim() });
     } else {
+      console.error('OpenAI API error:', data);
       res.status(response.status).json({ error: data });
     }
   } catch (error) {
-    console.error(error);
+    console.error('Server error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
-};
+}
