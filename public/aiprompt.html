@@ -5,49 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Prompt Generator</title>
   <style>
+    :root {
+      --primary-color: #4f46e5;
+      --primary-dark: #3730a3;
+      --background: #f9fafb;
+      --surface: #ffffff;
+      --border: #e5e7eb;
+      --text: #111827;
+      --muted: #6b7280;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
-      padding: 2rem;
-      background: #f4f4f9;
-      color: #333;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--background);
+      color: var(--text);
     }
 
     .container {
-      max-width: 700px;
-      margin: auto;
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+      max-width: 800px;
+      margin: 4rem auto;
+      background-color: var(--surface);
+      padding: 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      color: var(--primary-color);
+      margin-bottom: 2rem;
     }
 
     label {
-      display: block;
+      font-weight: 600;
       margin-top: 1rem;
-      font-weight: bold;
+      display: block;
+      color: var(--muted);
     }
 
-    select, input, textarea, button {
+    select, input {
       width: 100%;
       padding: 0.75rem;
       margin-top: 0.5rem;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
       font-size: 1rem;
     }
 
     button {
-      background: #4f46e5;
+      width: 100%;
+      padding: 0.9rem;
+      background-color: var(--primary-color);
       color: white;
       border: none;
+      border-radius: 8px;
+      font-size: 1.05rem;
+      font-weight: 600;
       cursor: pointer;
-      margin-top: 1.5rem;
-      transition: background 0.3s ease;
+      transition: background-color 0.3s ease;
     }
 
     button:hover {
-      background: #3730a3;
+      background-color: var(--primary-dark);
     }
 
     .output {
@@ -55,17 +81,16 @@
     }
 
     .prompt-box {
-      background: #eef1f7;
-      padding: 1rem;
-      border-radius: 5px;
+      background-color: #f1f5f9;
+      padding: 1.25rem;
+      border-radius: 8px;
       margin-top: 1rem;
       white-space: pre-wrap;
       word-wrap: break-word;
-      overflow-wrap: break-word;
-      border: 1px solid #ddd;
+      border: 1px solid var(--border);
+      animation: fadeIn 0.6s ease forwards;
       opacity: 0;
       transform: translateY(10px);
-      animation: fadeIn 0.6s forwards;
     }
 
     @keyframes fadeIn {
@@ -74,13 +99,20 @@
         transform: translateY(0);
       }
     }
+
+    .footer-note {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>AI Prompt Generator</h1>
 
-    <label for="category">Choose a category:</label>
+    <label for="category">Category</label>
     <select id="category">
       <option value="cold email">Cold Email</option>
       <option value="instagram caption">Instagram Caption</option>
@@ -89,18 +121,20 @@
       <option value="job cover letter">Job Cover Letter</option>
     </select>
 
-    <label for="topic">What's it about?</label>
+    <label for="topic">Topic</label>
     <input type="text" id="topic" placeholder="e.g., AI writing tools" />
 
-    <label for="tone">Tone (optional):</label>
+    <label for="tone">Tone <small style="color: var(--muted)">(optional)</small></label>
     <input type="text" id="tone" placeholder="e.g., friendly, persuasive" />
 
-    <label for="count">Number of variations (1–5):</label>
+    <label for="count">Number of Variants (1–5)</label>
     <input type="number" id="count" min="1" max="5" value="3" />
 
-    <button onclick="generate()">Generate</button>
+    <button onclick="generate()">Generate Prompts</button>
 
     <div class="output" id="output">AI-generated content will appear here...</div>
+
+    <div class="footer-note">Powered by OpenAI · Built with ♥ by You</div>
   </div>
 
   <script>
@@ -112,11 +146,11 @@
       const outputDiv = document.getElementById("output");
 
       if (!topic) {
-        outputDiv.innerText = "Please enter a topic.";
+        outputDiv.innerHTML = "<p style='color: red;'>Please enter a topic.</p>";
         return;
       }
 
-      outputDiv.innerHTML = "<em>Generating...</em>";
+      outputDiv.innerHTML = "<em>Generating prompts...</em>";
 
       try {
         const res = await fetch("/api/generate", {
@@ -136,10 +170,10 @@
             outputDiv.appendChild(box);
           });
         } else {
-          outputDiv.innerText = "Something went wrong.";
+          outputDiv.innerHTML = "<p style='color: red;'>Something went wrong.</p>";
         }
       } catch (err) {
-        outputDiv.innerText = "Something went wrong.";
+        outputDiv.innerHTML = "<p style='color: red;'>Something went wrong.</p>";
         console.error(err);
       }
     }
