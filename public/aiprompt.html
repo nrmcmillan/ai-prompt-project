@@ -12,6 +12,7 @@
       background: #f4f4f9;
       color: #333;
     }
+
     .container {
       max-width: 700px;
       margin: auto;
@@ -20,11 +21,13 @@
       border-radius: 10px;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
     }
+
     label {
       display: block;
       margin-top: 1rem;
       font-weight: bold;
     }
+
     select, input, textarea, button {
       width: 100%;
       padding: 0.75rem;
@@ -33,37 +36,43 @@
       border: 1px solid #ccc;
       font-size: 1rem;
     }
+
     button {
       background: #4f46e5;
       color: white;
       border: none;
       cursor: pointer;
       margin-top: 1.5rem;
+      transition: background 0.3s ease;
     }
+
     button:hover {
       background: #3730a3;
     }
+
     .output {
       margin-top: 2rem;
     }
-    .output-block {
+
+    .prompt-box {
       background: #eef1f7;
       padding: 1rem;
       border-radius: 5px;
-      margin-bottom: 1.5rem;
+      margin-top: 1rem;
       white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      border: 1px solid #ddd;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeIn 0.6s forwards;
     }
-    .spinner {
-      width: 24px;
-      height: 24px;
-      border: 3px solid #ccc;
-      border-top: 3px solid #4f46e5;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
@@ -103,7 +112,7 @@
         return;
       }
 
-      outputDiv.innerHTML = `<div class="spinner"></div>`;
+      outputDiv.innerHTML = "<em>Generating...</em>";
 
       try {
         const res = await fetch("/api/generate", {
@@ -114,27 +123,21 @@
 
         const data = await res.json();
 
-        if (data.outputs && Array.isArray(data.outputs)) {
-          outputDiv.innerHTML = data.outputs.map((output, i) => `
-            <div class="output-block">
-              <strong>Option ${i + 1}:</strong>
-              <pre>${output}</pre>
-              <button onclick="copyToClipboard(\`${output.replace(/`/g, '\\`')}\`)">📋 Copy</button>
-            </div>
-          `).join('');
+        if (data.output && Array.isArray(data.output)) {
+          outputDiv.innerHTML = "";
+          data.output.forEach(text => {
+            const box = document.createElement("div");
+            box.className = "prompt-box";
+            box.innerText = text;
+            outputDiv.appendChild(box);
+          });
         } else {
           outputDiv.innerText = "Something went wrong.";
         }
       } catch (err) {
-        console.error(err);
         outputDiv.innerText = "Something went wrong.";
+        console.error(err);
       }
-    }
-
-    function copyToClipboard(text) {
-      navigator.clipboard.writeText(text)
-        .then(() => alert("Copied to clipboard!"))
-        .catch(() => alert("Failed to copy."));
     }
   </script>
 </body>
