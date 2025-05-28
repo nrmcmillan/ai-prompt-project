@@ -58,11 +58,11 @@
 
     <label for="category">Choose a category:</label>
     <select id="category">
-      <option value="email">Cold Email</option>
-      <option value="instagram">Instagram Caption</option>
-      <option value="blog">Blog Outline</option>
-      <option value="seo">SEO Description</option>
-      <option value="job">Job Cover Letter</option>
+      <option value="cold email">Cold Email</option>
+      <option value="instagram caption">Instagram Caption</option>
+      <option value="blog outline">Blog Outline</option>
+      <option value="seo description">SEO Description</option>
+      <option value="job cover letter">Job Cover Letter</option>
     </select>
 
     <label for="topic">What's it about?</label>
@@ -83,16 +83,29 @@
       const tone = document.getElementById("tone").value;
       const outputDiv = document.getElementById("output");
 
+      if (!topic) {
+        outputDiv.innerText = "Please enter a topic.";
+        return;
+      }
+
       outputDiv.innerText = "Generating...";
 
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, topic, tone }),
-      });
+      // Construct the prompt
+      const prompt = `Write a ${category} about "${topic}"${tone ? " in a " + tone + " tone" : ""}.`;
 
-      const data = await res.json();
-      outputDiv.innerText = data.output || "Something went wrong.";
+      try {
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        });
+
+        const data = await res.json();
+        outputDiv.innerText = data.result || "Something went wrong.";
+      } catch (err) {
+        outputDiv.innerText = "Something went wrong.";
+        console.error(err);
+      }
     }
   </script>
 </body>

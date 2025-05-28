@@ -16,8 +16,5 @@
     "url": "https://github.com/nrmcmillan/ai-prompt-project/issues"
   },
   "homepage": "https://github.com/nrmcmillan/ai-prompt-project#readme",
-  "dependencies": {
-    "node-fetch": "^3.3.2"
-  },
   "description": ""
 }
