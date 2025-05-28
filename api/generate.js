@@ -1,6 +1,6 @@
-// api/generate.js
+const fetch = require('node-fetch');
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
@@ -33,6 +33,7 @@ export default async function handler(req, res) {
       res.status(response.status).json({ error: data });
     }
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
-}
+};

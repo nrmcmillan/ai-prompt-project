@@ -1,0 +1,23 @@
+{
+  "name": "ai-prompt-project",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nrmcmillan/ai-prompt-project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nrmcmillan/ai-prompt-project/issues"
+  },
+  "homepage": "https://github.com/nrmcmillan/ai-prompt-project#readme",
+  "description": "",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
