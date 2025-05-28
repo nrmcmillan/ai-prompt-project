@@ -189,7 +189,7 @@
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ category, topic, tone, count }),
+          body: JSON.stringify({ category, topic, tone, variants: count }),
         });
 
         const data = await res.json();
