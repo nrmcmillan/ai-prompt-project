@@ -84,14 +84,14 @@
       background-color: #f1f5f9;
       padding: 1.25rem;
       border-radius: 8px;
-      margin-top: 1rem;
+      margin-top: 1.5rem;
       white-space: pre-wrap;
       word-wrap: break-word;
       border: 1px solid var(--border);
-      position: relative;
       animation: fadeIn 0.6s ease forwards;
       opacity: 0;
       transform: translateY(10px);
+      position: relative;
     }
 
     @keyframes fadeIn {
@@ -102,23 +102,19 @@
     }
 
     .copy-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: var(--primary-color);
+      display: block;
+      margin: 0.75rem auto 0;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.85rem;
+      background-color: var(--primary-color);
       color: white;
       border: none;
-      padding: 0.3rem 0.6rem;
-      font-size: 0.8rem;
       border-radius: 5px;
       cursor: pointer;
     }
 
-    .footer-note {
-      margin-top: 2rem;
-      text-align: center;
-      font-size: 0.85rem;
-      color: var(--muted);
+    .copy-btn:hover {
+      background-color: var(--primary-dark);
     }
 
     .spinner {
@@ -135,6 +131,13 @@
       to {
         transform: rotate(360deg);
       }
+    }
+
+    .footer-note {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
     }
   </style>
 </head>
@@ -193,7 +196,7 @@
 
         if (data.output && Array.isArray(data.output)) {
           outputDiv.innerHTML = "";
-          data.output.forEach((text, index) => {
+          data.output.forEach((text) => {
             const box = document.createElement("div");
             box.className = "prompt-box";
             box.innerText = text;
