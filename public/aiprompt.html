@@ -2,78 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI Prompt Generator</title>
   <style>
-    :root {
-      --primary-color: #4f46e5;
-      --primary-dark: #3730a3;
-      --background: #f9fafb;
-      --surface: #ffffff;
-      --border: #e5e7eb;
-      --text: #111827;
-      --muted: #6b7280;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
     body {
+      font-family: Arial, sans-serif;
       margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--background);
-      color: var(--text);
+      padding: 2rem;
+      background: #f9fafb;
+      color: #111827;
     }
 
     .container {
-      max-width: 800px;
-      margin: 4rem auto;
-      background-color: var(--surface);
-      padding: 2.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 16px rgba(0, 0, 0, 0.05);
     }
 
     h1 {
       text-align: center;
-      font-size: 2rem;
-      color: var(--primary-color);
-      margin-bottom: 2rem;
+      color: #4f46e5;
     }
 
     label {
-      font-weight: 600;
-      margin-top: 1rem;
       display: block;
-      color: var(--muted);
+      margin-top: 1rem;
+      font-weight: bold;
     }
 
-    select, input {
+    select, input[type="text"], input[type="number"], input[type="file"] {
       width: 100%;
       padding: 0.75rem;
       margin-top: 0.5rem;
-      margin-bottom: 1rem;
-      border-radius: 8px;
-      border: 1px solid var(--border);
+      border-radius: 6px;
+      border: 1px solid #ccc;
       font-size: 1rem;
     }
 
     button {
+      margin-top: 1.5rem;
       width: 100%;
       padding: 0.9rem;
-      background-color: var(--primary-color);
+      background-color: #4f46e5;
       color: white;
+      font-size: 1rem;
+      font-weight: bold;
       border: none;
-      border-radius: 8px;
-      font-size: 1.05rem;
-      font-weight: 600;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
     }
 
     button:hover {
-      background-color: var(--primary-dark);
+      background-color: #3730a3;
     }
 
     .output {
@@ -81,24 +64,12 @@
     }
 
     .prompt-box {
-      background-color: #f1f5f9;
-      padding: 1.25rem;
-      border-radius: 8px;
-      margin-top: 1.5rem;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      border: 1px solid var(--border);
-      animation: fadeIn 0.6s ease forwards;
-      opacity: 0;
-      transform: translateY(10px);
+      background: #eef2f7;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-top: 1rem;
       position: relative;
-    }
-
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
     }
 
     .copy-btn {
@@ -106,15 +77,11 @@
       margin: 0.75rem auto 0;
       padding: 0.4rem 0.75rem;
       font-size: 0.85rem;
-      background-color: var(--primary-color);
+      background-color: #4f46e5;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 4px;
       cursor: pointer;
-    }
-
-    .copy-btn:hover {
-      background-color: var(--primary-dark);
     }
 
     .spinner {
@@ -122,7 +89,7 @@
       width: 40px;
       height: 40px;
       border: 4px solid #ccc;
-      border-top-color: var(--primary-color);
+      border-top-color: #4f46e5;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -131,13 +98,6 @@
       to {
         transform: rotate(360deg);
       }
-    }
-
-    .footer-note {
-      margin-top: 2rem;
-      text-align: center;
-      font-size: 0.85rem;
-      color: var(--muted);
     }
   </style>
 </head>
@@ -157,17 +117,18 @@
     <label for="topic">Topic</label>
     <input type="text" id="topic" placeholder="e.g., AI writing tools" />
 
-    <label for="tone">Tone <small style="color: var(--muted)">(optional)</small></label>
+    <label for="tone">Tone (optional)</label>
     <input type="text" id="tone" placeholder="e.g., friendly, persuasive" />
 
-    <label for="count">Number of Variants (1–5)</label>
-    <input type="number" id="count" min="1" max="5" value="3" />
+    <label for="variants">Number of Variants (1–5)</label>
+    <input type="number" id="variants" min="1" max="5" value="3" />
 
-    <button onclick="generate()">Generate Prompts</button>
+    <label for="image">Optional Image</label>
+    <input type="file" id="image" accept="image/*" />
+
+    <button onclick="generate()">Generate</button>
 
     <div class="output" id="output"></div>
-
-    <div class="footer-note">Powered by OpenAI · Built with ♥ by You</div>
   </div>
 
   <script>
@@ -175,7 +136,8 @@
       const category = document.getElementById("category").value;
       const topic = document.getElementById("topic").value;
       const tone = document.getElementById("tone").value;
-      const count = Math.max(1, Math.min(5, parseInt(document.getElementById("count").value)));
+      const variants = Math.min(5, Math.max(1, parseInt(document.getElementById("variants").value)));
+      const image = document.getElementById("image").files[0];
       const outputDiv = document.getElementById("output");
 
       if (!topic) {
@@ -185,32 +147,38 @@
 
       outputDiv.innerHTML = '<div class="spinner"></div>';
 
+      const formData = new FormData();
+      formData.append("category", category);
+      formData.append("topic", topic);
+      formData.append("tone", tone);
+      formData.append("variants", variants);
+      if (image) formData.append("image", image);
+
       try {
         const res = await fetch("/api/generate", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ category, topic, tone, count })
+          body: formData,
         });
 
         const data = await res.json();
 
-        if (data.output && Array.isArray(data.output)) {
+        if (Array.isArray(data.output)) {
           outputDiv.innerHTML = "";
-          data.output.forEach((text) => {
+          data.output.forEach((variant) => {
             const box = document.createElement("div");
             box.className = "prompt-box";
-            box.innerText = text;
+            box.textContent = variant;
 
-            const copyBtn = document.createElement("button");
-            copyBtn.className = "copy-btn";
-            copyBtn.innerText = "Copy";
-            copyBtn.onclick = () => {
-              navigator.clipboard.writeText(text);
-              copyBtn.innerText = "Copied!";
-              setTimeout(() => copyBtn.innerText = "Copy", 1500);
+            const btn = document.createElement("button");
+            btn.className = "copy-btn";
+            btn.innerText = "Copy";
+            btn.onclick = () => {
+              navigator.clipboard.writeText(variant);
+              btn.innerText = "Copied!";
+              setTimeout(() => btn.innerText = "Copy", 1200);
             };
 
-            box.appendChild(copyBtn);
+            box.appendChild(btn);
             outputDiv.appendChild(box);
           });
         } else {
