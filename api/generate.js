@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   }
 
   const form = new IncomingForm({ keepExtensions: true });
-  
+
   form.parse(req, async (err, fields, files) => {
     if (err) {
       return res.status(400).json({ error: 'Form parsing error' });
@@ -30,6 +30,10 @@ export default async function handler(req, res) {
     const imageBuffer = fs.readFileSync(file.filepath);
     const base64Image = imageBuffer.toString('base64');
 
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ error: 'Missing OpenAI API key' });
+    }
+
     try {
       const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -39,21 +43,23 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: 'gpt-4-vision-preview',
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Write ${variants} different Instagram captions about "${topic}"${tone ? ` in a ${tone} tone` : ''}.`
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/jpeg;base64,${base64Image}`
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: `Write ${variants} different Instagram captions about "${topic}"${tone ? ` in a ${tone} tone` : ''}.`
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:image/jpeg;base64,${base64Image}`
+                  }
                 }
-              }
-            ]
-          }],
+              ]
+            }
+          ],
           max_tokens: 500
         })
       });
