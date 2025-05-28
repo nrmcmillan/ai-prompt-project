@@ -1,34 +1,38 @@
+// api/generate.js
+
 export default async function handler(req, res) {
-  const { category, topic, tone } = req.body;
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
-  const promptMap = {
-    email: `Write a ${tone || 'professional'} cold email introducing ${topic}. Include a soft CTA.`,
-    instagram: `Write an ${tone || 'engaging'} Instagram caption about ${topic}. Include a trending hashtag.`,
-    blog: `Create a blog post outline on ${topic}. Use a ${tone || 'helpful'} tone.`,
-    seo: `Write a ${tone || 'concise'} meta description for a page about ${topic}. Keep it under 160 characters.`,
-    job: `Write a ${tone || 'formal'} cover letter tailored to a job related to ${topic}. Include enthusiasm and relevant experience.`
-  };
+  const { prompt } = req.body;
 
-  const finalPrompt = promptMap[category] || `Write something about ${topic} in a ${tone} tone.`;
+  if (!prompt) {
+    return res.status(400).json({ error: 'Prompt is required' });
+  }
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  try {
+    const response = await fetch('https://api.openai.com/v1/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'text-davinci-003',
+        prompt,
+        max_tokens: 100,
+      }),
+    });
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: "You are a helpful writing assistant." },
-        { role: "user", content: finalPrompt }
-      ],
-      max_tokens: 300
-    })
-  });
+    const data = await response.json();
 
-  const json = await response.json();
-  res.status(200).json({ output: json.choices?.[0]?.message?.content });
+    if (response.ok) {
+      res.status(200).json({ result: data.choices[0].text.trim() });
+    } else {
+      res.status(response.status).json({ error: data });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 }
