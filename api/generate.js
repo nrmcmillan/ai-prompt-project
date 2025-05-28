@@ -16,18 +16,17 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: "You are a helpful content assistant." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.7
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        n: 3
       })
     });
 
     const data = await response.json();
 
     if (response.ok) {
-      res.status(200).json({ output: data.choices[0].message.content.trim() });
+      const outputs = data.choices.map(choice => choice.message.content.trim());
+      res.status(200).json({ outputs });
     } else {
       console.error("OpenAI API error:", data);
       res.status(response.status).json({ error: data });

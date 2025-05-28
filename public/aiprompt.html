@@ -25,7 +25,7 @@
       margin-top: 1rem;
       font-weight: bold;
     }
-    select, input, button {
+    select, input, textarea, button {
       width: 100%;
       padding: 0.75rem;
       margin-top: 0.5rem;
@@ -45,10 +45,25 @@
     }
     .output {
       margin-top: 2rem;
+    }
+    .output-block {
       background: #eef1f7;
       padding: 1rem;
       border-radius: 5px;
+      margin-bottom: 1.5rem;
       white-space: pre-wrap;
+    }
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid #ccc;
+      border-top: 3px solid #4f46e5;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -88,7 +103,7 @@
         return;
       }
 
-      outputDiv.innerText = "Generating...";
+      outputDiv.innerHTML = `<div class="spinner"></div>`;
 
       try {
         const res = await fetch("/api/generate", {
@@ -98,11 +113,28 @@
         });
 
         const data = await res.json();
-        outputDiv.innerText = data.output || "Something went wrong.";
+
+        if (data.outputs && Array.isArray(data.outputs)) {
+          outputDiv.innerHTML = data.outputs.map((output, i) => `
+            <div class="output-block">
+              <strong>Option ${i + 1}:</strong>
+              <pre>${output}</pre>
+              <button onclick="copyToClipboard(\`${output.replace(/`/g, '\\`')}\`)">📋 Copy</button>
+            </div>
+          `).join('');
+        } else {
+          outputDiv.innerText = "Something went wrong.";
+        }
       } catch (err) {
-        outputDiv.innerText = "Something went wrong.";
         console.error(err);
+        outputDiv.innerText = "Something went wrong.";
       }
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text)
+        .then(() => alert("Copied to clipboard!"))
+        .catch(() => alert("Failed to copy."));
     }
   </script>
 </body>
