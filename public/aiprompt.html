@@ -25,7 +25,7 @@
       margin-top: 1rem;
       font-weight: bold;
     }
-    select, input, textarea, button {
+    select, input, button {
       width: 100%;
       padding: 0.75rem;
       margin-top: 0.5rem;
@@ -90,18 +90,15 @@
 
       outputDiv.innerText = "Generating...";
 
-      // Construct the prompt
-      const prompt = `Write a ${category} about "${topic}"${tone ? " in a " + tone + " tone" : ""}.`;
-
       try {
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify({ category, topic, tone }),
         });
 
         const data = await res.json();
-        outputDiv.innerText = data.result || "Something went wrong.";
+        outputDiv.innerText = data.output || "Something went wrong.";
       } catch (err) {
         outputDiv.innerText = "Something went wrong.";
         console.error(err);
