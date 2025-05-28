@@ -163,6 +163,13 @@
     <label for="count">Number of Variants (1–5)</label>
     <input type="number" id="count" min="1" max="5" value="3" />
 
+    <label for="style">Design Style</label>
+    <select id="style">
+      <option value="clean">Clean</option>
+      <option value="funny">Funny</option>
+      <option value="emotional">Emotional</option>
+    </select>
+
     <button onclick="generate()">Generate Prompts</button>
 
     <div class="output" id="output"></div>
@@ -176,6 +183,7 @@
       const topic = document.getElementById("topic").value;
       const tone = document.getElementById("tone").value;
       const count = Math.max(1, Math.min(5, parseInt(document.getElementById("count").value)));
+      const style = document.getElementById("style").value;
       const outputDiv = document.getElementById("output");
 
       if (!topic) {
@@ -189,7 +197,7 @@
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ category, topic, tone, variants: count }),
+          body: JSON.stringify({ category, topic, tone, count, style }),
         });
 
         const data = await res.json();
