@@ -330,14 +330,11 @@
           return;
         }
 
-        const results = Array.isArray(data.output) ? data.output : [data.output];
+        const box = document.createElement("div");
+box.className = "prompt-box";
+box.textContent = data.output;
+output.appendChild(box);
 
-        results.forEach((text) => {
-          const box = document.createElement("div");
-          box.className = "prompt-box";
-          box.textContent = text;
-          output.appendChild(box);
-        });
       } catch (err) {
         console.error("Fetch error:", err);
         output.innerHTML = `<div class="prompt-box">❌ Network error. Check console for details.</div>`;
