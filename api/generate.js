@@ -15,12 +15,10 @@ export default async function handler(req, res) {
     length = 'default'
   } = req.body;
 
-  // Add hashtags/emojis instructions
   let extra = '';
   if (addHashtags) extra += ' Include relevant hashtags.';
   if (addEmojis) extra += ' Add emojis where appropriate.';
 
-  // Add length instructions based on slider
   switch (length) {
     case 'very short':
       extra += ' Limit response to a very brief sentence or phrase.';
@@ -36,7 +34,6 @@ export default async function handler(req, res) {
       break;
     case 'default':
     default:
-      // No extra instructions needed
       break;
   }
 
@@ -66,6 +63,7 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
+    console.log("OpenAI API response:", data);
 
     if (!response.ok) {
       console.error("OpenAI API error:", data);

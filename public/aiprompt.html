@@ -307,31 +307,50 @@
       const output = document.getElementById("output");
       output.innerHTML = '<div class="spinner"></div>';
 
-      const response = await fetch("/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          category,
-          topic,
-          tone,
-          count,
-          addHashtags,
-          addEmojis,
-          length
-        }),
-      });
+      try {
+        const response = await fetch("/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            category,
+            topic,
+            tone,
+            count,
+            addHashtags,
+            addEmojis,
+            length
+          }),
+        });
 
-      const data = await response.json();
-      output.innerHTML = "";
+        const data = await response.json();
+        output.innerHTML = "";
 
-      data.output.forEach((result) => {
-        const box = document.createElement("div");
-        box.className = "prompt-box";
-        box.textContent = result;
-        output.appendChild(box);
-      });
+        if (!response.ok || !data.output) {
+          output.innerHTML = `<div class="prompt-box">❌ Error: ${data?.error?.message || 'Prompt failed to generate.'}</div>`;
+          console.error("Error from server:", data);
+          return;
+        }
+
+        if (Array.isArray(data.output)) {
+          data.output.forEach((result) => {
+            const box = document.createElement("div");
+            box.className = "prompt-box";
+            box.textContent = result;
+            output.appendChild(box);
+          });
+        } else {
+          const box = document.createElement("div");
+          box.className = "prompt-box";
+          box.textContent = data.output;
+          output.appendChild(box);
+        }
+
+      } catch (err) {
+        output.innerHTML = `<div class="prompt-box">❌ Network error. Check console for details.</div>`;
+        console.error("Fetch error:", err);
+      }
     }
   </script>
 </body>
