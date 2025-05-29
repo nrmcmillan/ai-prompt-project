@@ -59,14 +59,22 @@
       font-size: 1rem;
     }
 
+    .checkbox-container {
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
     button {
-      width: 100%;
-      padding: 0.9rem;
+      padding: 0.6rem 1rem;
       background-color: var(--primary-color);
       color: white;
       border: none;
-      border-radius: 8px;
-      font-size: 1.05rem;
+      border-radius: 5px;
+      font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
       transition: background-color 0.3s ease;
@@ -94,6 +102,14 @@
       position: relative;
     }
 
+    .improved {
+      background-color: #e0f7fa;
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 5px;
+      border: 1px dashed #4f46e5;
+    }
+
     @keyframes fadeIn {
       to {
         opacity: 1;
@@ -101,20 +117,9 @@
       }
     }
 
-    .copy-btn {
-      display: block;
-      margin: 0.75rem auto 0;
-      padding: 0.4rem 0.75rem;
-      font-size: 0.85rem;
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .copy-btn:hover {
-      background-color: var(--primary-dark);
+    .copy-btn, .improve-btn {
+      display: inline-block;
+      margin: 0.75rem 0.5rem 0 0.5rem;
     }
 
     .spinner {
@@ -155,21 +160,21 @@
     </select>
 
     <label for="topic">Topic</label>
-    <input type="text" id="topic" placeholder="e.g., morning coffee, hiking in the Smokies, cozy winter vibes"
- />
+    <input type="text" id="topic" placeholder="e.g., morning coffee, hiking in the Smokies, cozy winter vibes" />
 
     <label for="tone">Tone <small style="color: var(--muted)">(optional)</small></label>
     <input list="tone-options" id="tone" placeholder="e.g., Friendly" />
-<datalist id="tone-options">
-  <option value="Friendly">
-  <option value="Professional">
-  <option value="Witty">
-  <option value="Inspiring">
-  <option value="Casual">
-  <option value="Persuasive">
-  <option value="Excited">
-  <option value="Confident">
-</datalist>
+    <datalist id="tone-options">
+      <option value="Friendly">
+      <option value="Professional">
+      <option value="Witty">
+      <option value="Inspiring">
+      <option value="Casual">
+      <option value="Persuasive">
+      <option value="Excited">
+      <option value="Confident">
+    </datalist>
+
     <label for="count">Number of Variants</label>
     <select id="count">
       <option value="1"selected>1</option>
@@ -178,6 +183,16 @@
       <option value="4">4</option>
       <option value="5">5</option>
     </select>
+
+    <div class="checkbox-container">
+      <input type="checkbox" id="addHashtags" />
+      <label for="addHashtags">Add Hashtags</label>
+    </div>
+
+    <div class="checkbox-container">
+      <input type="checkbox" id="addEmojis" />
+      <label for="addEmojis">Add Emojis</label>
+    </div>
 
     <button onclick="generate()">Generate Prompts</button>
 
@@ -192,6 +207,8 @@
       const topic = document.getElementById("topic").value;
       const tone = document.getElementById("tone").value;
       const count = parseInt(document.getElementById("count").value);
+      const addHashtags = document.getElementById("addHashtags").checked;
+      const addEmojis = document.getElementById("addEmojis").checked;
       const outputDiv = document.getElementById("output");
 
       if (!topic) {
@@ -205,14 +222,14 @@
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ category, topic, tone, count }),
+          body: JSON.stringify({ category, topic, tone, count, addHashtags, addEmojis }),
         });
 
         const data = await res.json();
 
         if (data.output && Array.isArray(data.output)) {
           outputDiv.innerHTML = "";
-          data.output.forEach((text) => {
+          data.output.forEach((text, index) => {
             const box = document.createElement("div");
             box.className = "prompt-box";
             box.innerText = text;
@@ -226,7 +243,35 @@
               setTimeout(() => copyBtn.innerText = "Copy", 1500);
             };
 
+            const improveBtn = document.createElement("button");
+            improveBtn.className = "improve-btn";
+            improveBtn.innerText = "Improve This";
+            improveBtn.onclick = async () => {
+              improveBtn.disabled = true;
+              improveBtn.innerText = "Improving...";
+
+              const improveRes = await fetch("/api/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ category, topic, tone, mode: "improve", original: text, addHashtags, addEmojis })
+              });
+              const improved = await improveRes.json();
+
+              if (improved.output) {
+                const improvedBox = document.createElement("div");
+                improvedBox.className = "improved";
+                improvedBox.innerText = "Improved: " + improved.output;
+                box.appendChild(improvedBox);
+              } else {
+                alert("Improvement failed.");
+              }
+
+              improveBtn.disabled = false;
+              improveBtn.innerText = "Improve This";
+            };
+
             box.appendChild(copyBtn);
+            box.appendChild(improveBtn);
             outputDiv.appendChild(box);
           });
         } else {
