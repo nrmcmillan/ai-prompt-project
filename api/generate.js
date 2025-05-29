@@ -1,86 +1,83 @@
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+<script>
+  const slider = document.getElementById("lengthSlider");
+  const label = document.getElementById("lengthLabel");
 
-  const {
-    category,
-    topic,
-    tone,
-    count = 1,
-    addHashtags,
-    addEmojis,
-    mode,
-    original,
-    length = 'default'
-  } = req.body;
+  const lengthMap = {
+    1: "very short",
+    2: "shorter",
+    3: "default",
+    4: "longer",
+    5: "very long"
+  };
 
-  let extra = '';
-  if (addHashtags) extra += ' Include relevant hashtags.';
-  if (addEmojis) extra += ' Add emojis where appropriate.';
+  const labelMap = {
+    1: "Very Short",
+    2: "Short",
+    3: "Default",
+    4: "Long",
+    5: "Very Long"
+  };
 
-  switch (length) {
-    case 'very short':
-      extra += ' Limit response to a very brief sentence or phrase.';
-      break;
-    case 'shorter':
-      extra += ' Keep the response concise and brief.';
-      break;
-    case 'longer':
-      extra += ' Provide more explanation and detail than usual.';
-      break;
-    case 'very long':
-      extra += ' Write a rich, detailed, and expanded version with multiple ideas.';
-      break;
-    case 'default':
-    default:
-      break;
-  }
+  slider.addEventListener("input", () => {
+    label.textContent = labelMap[slider.value];
+  });
 
-  let prompt = "";
+  async function generate() {
+    const category = document.getElementById("category").value.trim();
+    const topic = document.getElementById("topic").value.trim();
+    const tone = document.getElementById("tone").value.trim();
+    const count = parseInt(document.getElementById("count").value);
+    const addHashtags = document.getElementById("addHashtags").checked;
+    const addEmojis = document.getElementById("addEmojis").checked;
+    const length = lengthMap[slider.value];
 
-  if (mode === 'improve' && original) {
-    prompt = `Improve the following ${category} for the topic "${topic}"${tone ? ` in a ${tone} tone` : ''}.${extra}\n\n"${original}"`;
-  } else {
-    prompt = `Write ${count} different ${category}s about "${topic}"${tone ? ` in a ${tone} tone` : ''}.${extra}`;
-  }
+    const output = document.getElementById("output");
+    output.innerHTML = '<div class="spinner"></div>';
 
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: "You are a helpful creative writing assistant." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.75
-      })
-    });
-
-    const data = await response.json();
-    console.log("OpenAI API response:", data);
-
-    if (!response.ok) {
-      console.error("OpenAI API error:", data);
-      return res.status(response.status).json({ error: data });
+    // Validate inputs
+    if (!category || !topic) {
+      output.innerHTML = `<div class="prompt-box">❌ Please enter both a category and a topic.</div>`;
+      return;
     }
 
-    const content = data.choices?.[0]?.message?.content?.trim();
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          category,
+          topic,
+          tone,
+          count,
+          addHashtags,
+          addEmojis,
+          length,
+          mode: "generate" // critical: ensure the backend uses the right logic
+        })
+      });
 
-    if (mode === 'improve') {
-      return res.status(200).json({ output: content });
+      const data = await response.json();
+      output.innerHTML = "";
+
+      if (!response.ok || !data.output) {
+        output.innerHTML = `<div class="prompt-box">❌ ${data?.error?.message || 'Generation failed. Check console.'}</div>`;
+        console.error("API error:", data);
+        return;
+      }
+
+      const results = Array.isArray(data.output) ? data.output : [data.output];
+
+      results.forEach((text) => {
+        const box = document.createElement("div");
+        box.className = "prompt-box";
+        box.textContent = text;
+        output.appendChild(box);
+      });
+    } catch (err) {
+      console.error("Fetch error:", err);
+      output.innerHTML = `<div class="prompt-box">❌ Network error. Check console for details.</div>`;
     }
-
-    const splitOutput = content.split(/\n{2,}/).filter(p => p.trim().length > 0);
-    return res.status(200).json({ output: splitOutput });
-
-  } catch (err) {
-    console.error("Server error:", err);
-    return res.status(500).json({ error: 'Internal Server Error' });
   }
-}
+</script>
