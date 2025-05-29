@@ -330,10 +330,15 @@
           return;
         }
 
-        const box = document.createElement("div");
-box.className = "prompt-box";
-box.textContent = data.output;
-output.appendChild(box);
+       const results = data.output.split(/\n{2,}/).filter(p => p.trim().length > 0);
+
+results.forEach((text) => {
+  const box = document.createElement("div");
+  box.className = "prompt-box";
+  box.textContent = text.trim();
+  output.appendChild(box);
+});
+
 
       } catch (err) {
         console.error("Fetch error:", err);
