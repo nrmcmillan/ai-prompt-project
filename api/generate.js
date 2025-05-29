@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   let prompt = "";
 
   if (mode === 'improve' && original) {
-    prompt = `Improve the following ${category} for the topic "${topic}"${tone ? ` in a ${tone} tone` : ''}.${extra ? extra : ''}\n\n"${original}"`;
+    prompt = `Improve the following ${category} for the topic "${topic}"${tone ? ` in a ${tone} tone` : ''}.${extra}\n\n"${original}"`;
   } else {
     prompt = `Write ${count} different ${category}s about "${topic}"${tone ? ` in a ${tone} tone` : ''}.${extra}`;
   }
@@ -45,7 +45,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ output: content });
     }
 
-    // Split into separate responses
     const splitOutput = content.split(/\n{2,}/).filter(p => p.trim().length > 0);
     return res.status(200).json({ output: splitOutput });
   } catch (err) {
