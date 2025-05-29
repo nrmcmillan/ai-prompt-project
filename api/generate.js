@@ -15,14 +15,18 @@ export default async function handler(req, res) {
     original
   } = req.body;
 
-  const extras = `${addHashtags ? ' Include relevant hashtags.' : ''}${addEmojis ? ' Add emojis where appropriate.' : ''}`;
-  const lengthInstruction = length ? ` Make the length ${length}.` : '';
-  let prompt = '';
+  const extras = [
+    length ? ` Make it ${length}.` : '',
+    addHashtags ? ' Include relevant hashtags.' : '',
+    addEmojis ? ' Add emojis where appropriate.' : ''
+  ].join('');
 
-  if (mode === 'improve' && original) {
-    prompt = `Improve the following ${category} for the topic "${topic}"${tone ? ` in a ${tone} tone` : ''}.${extras}${lengthInstruction}\n\n"${original}"`;
+  let prompt = "";
+
+  if (mode === "improve" && original) {
+    prompt = `Improve the following ${category} for the topic "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}\n\n"${original}"`;
   } else {
-    prompt = `Write ${count} different ${category}s about "${topic}"${tone ? ` in a ${tone} tone` : ''}.${extras}${lengthInstruction}`;
+    prompt = `Write ${count} different ${category}s about "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}`;
   }
 
   try {
@@ -38,7 +42,7 @@ export default async function handler(req, res) {
           { role: "system", content: "You are a helpful creative writing assistant." },
           { role: "user", content: prompt }
         ],
-        temperature: 0.7
+        temperature: 0.75
       })
     });
 
@@ -51,13 +55,22 @@ export default async function handler(req, res) {
 
     const content = data.choices?.[0]?.message?.content?.trim();
 
-    if (!content) {
-      return res.status(500).json({ error: "No content generated." });
+    if (mode === "improve") {
+      return res.status(200).json({ output: content });
     }
 
-    return res.status(200).json({ output: content });
+    // Clean and split into separate variants (look for numbered items or breaks)
+    const variants = content
+      .split(/\n(?=\d+\.\s)/) // split by numbered list (e.g., 1. , 2. )
+      .map(v => v.trim())
+      .filter(v => v.length > 0);
+
+    return res.status(200).json({
+      output: count === 1 ? [content] : variants
+    });
+
   } catch (err) {
     console.error("Server error:", err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 }
