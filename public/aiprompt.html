@@ -71,6 +71,19 @@
       box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
     }
 
+    input[type=range] {
+      width: 100%;
+      margin-top: 0.5rem;
+      margin-bottom: 0.3rem;
+    }
+
+    #lengthLabel {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
     .toggle-container {
       display: flex;
       gap: 1.5rem;
@@ -188,12 +201,6 @@
       }
     }
 
-    input[type=range] {
-      width: 100%;
-      margin-top: 0.5rem;
-      margin-bottom: 0.3rem;
-    }
-
     .footer-note {
       margin-top: 2rem;
       text-align: center;
@@ -233,9 +240,7 @@
 
     <label for="lengthSlider">Response Length</label>
     <input type="range" id="lengthSlider" min="1" max="5" value="3" />
-    <div id="lengthLabel" style="text-align:center; margin-bottom:1.5rem; color: var(--muted); font-size: 0.9rem;">
-      Default
-    </div>
+    <div id="lengthLabel">Default</div>
 
     <label for="count">Number of Variants</label>
     <select id="count">
@@ -275,20 +280,20 @@
     const slider = document.getElementById("lengthSlider");
     const label = document.getElementById("lengthLabel");
 
-    const lengthMap = {
-      1: "very short",
-      2: "shorter",
-      3: "default",
-      4: "longer",
-      5: "very long"
-    };
-
     const labelMap = {
       1: "Very Short",
       2: "Short",
       3: "Default",
       4: "Long",
       5: "Very Long"
+    };
+
+    const lengthMap = {
+      1: "very short",
+      2: "short",
+      3: "default",
+      4: "long",
+      5: "very long"
     };
 
     slider.addEventListener("input", () => {
@@ -299,57 +304,43 @@
       const category = document.getElementById("category").value;
       const topic = document.getElementById("topic").value;
       const tone = document.getElementById("tone").value;
-      const count = document.getElementById("count").value;
+      const count = parseInt(document.getElementById("count").value);
       const addHashtags = document.getElementById("addHashtags").checked;
       const addEmojis = document.getElementById("addEmojis").checked;
       const length = lengthMap[slider.value];
-
       const output = document.getElementById("output");
+
       output.innerHTML = '<div class="spinner"></div>';
 
       try {
         const response = await fetch("/api/generate", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "application/json"
           },
-          body: JSON.stringify({
-            category,
-            topic,
-            tone,
-            count,
-            addHashtags,
-            addEmojis,
-            length
-          }),
+          body: JSON.stringify({ category, topic, tone, count, addHashtags, addEmojis, length })
         });
 
         const data = await response.json();
         output.innerHTML = "";
 
         if (!response.ok || !data.output) {
-          output.innerHTML = `<div class="prompt-box">❌ Error: ${data?.error?.message || 'Prompt failed to generate.'}</div>`;
-          console.error("Error from server:", data);
+          output.innerHTML = `<div class="prompt-box">❌ ${data?.error?.message || 'Generation failed. Check console.'}</div>`;
+          console.error("API error:", data);
           return;
         }
 
-        if (Array.isArray(data.output)) {
-          data.output.forEach((result) => {
-            const box = document.createElement("div");
-            box.className = "prompt-box";
-            box.textContent = result;
-            output.appendChild(box);
-          });
-        } else {
+        const results = Array.isArray(data.output) ? data.output : [data.output];
+
+        results.forEach((text) => {
           const box = document.createElement("div");
           box.className = "prompt-box";
-          box.textContent = data.output;
+          box.textContent = text;
           output.appendChild(box);
-        }
-
+        });
       } catch (err) {
-        output.innerHTML = `<div class="prompt-box">❌ Network error. Check console for details.</div>`;
         console.error("Fetch error:", err);
+        output.innerHTML = `<div class="prompt-box">❌ Network error. Check console for details.</div>`;
       }
     }
   </script>

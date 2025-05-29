@@ -1,83 +1,58 @@
-<script>
-  const slider = document.getElementById("lengthSlider");
-  const label = document.getElementById("lengthLabel");
-
-  const lengthMap = {
-    1: "very short",
-    2: "shorter",
-    3: "default",
-    4: "longer",
-    5: "very long"
-  };
-
-  const labelMap = {
-    1: "Very Short",
-    2: "Short",
-    3: "Default",
-    4: "Long",
-    5: "Very Long"
-  };
-
-  slider.addEventListener("input", () => {
-    label.textContent = labelMap[slider.value];
-  });
-
-  async function generate() {
-    const category = document.getElementById("category").value.trim();
-    const topic = document.getElementById("topic").value.trim();
-    const tone = document.getElementById("tone").value.trim();
-    const count = parseInt(document.getElementById("count").value);
-    const addHashtags = document.getElementById("addHashtags").checked;
-    const addEmojis = document.getElementById("addEmojis").checked;
-    const length = lengthMap[slider.value];
-
-    const output = document.getElementById("output");
-    output.innerHTML = '<div class="spinner"></div>';
-
-    // Validate inputs
-    if (!category || !topic) {
-      output.innerHTML = `<div class="prompt-box">❌ Please enter both a category and a topic.</div>`;
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          category,
-          topic,
-          tone,
-          count,
-          addHashtags,
-          addEmojis,
-          length,
-          mode: "generate" // critical: ensure the backend uses the right logic
-        })
-      });
-
-      const data = await response.json();
-      output.innerHTML = "";
-
-      if (!response.ok || !data.output) {
-        output.innerHTML = `<div class="prompt-box">❌ ${data?.error?.message || 'Generation failed. Check console.'}</div>`;
-        console.error("API error:", data);
-        return;
-      }
-
-      const results = Array.isArray(data.output) ? data.output : [data.output];
-
-      results.forEach((text) => {
-        const box = document.createElement("div");
-        box.className = "prompt-box";
-        box.textContent = text;
-        output.appendChild(box);
-      });
-    } catch (err) {
-      console.error("Fetch error:", err);
-      output.innerHTML = `<div class="prompt-box">❌ Network error. Check console for details.</div>`;
-    }
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
-</script>
+
+  const {
+    category,
+    topic,
+    tone,
+    count = 1,
+    addHashtags,
+    addEmojis,
+    length
+  } = req.body;
+
+  const extra = `${addHashtags ? ' Include relevant hashtags.' : ''}${addEmojis ? ' Add emojis where appropriate.' : ''}`;
+  const lengthNote = length && length !== 'default' ? ` Make it ${length}.` : '';
+  const toneNote = tone ? ` in a ${tone} tone` : '';
+
+  const prompt = `Write ${count} different ${category}s about "${topic}"${toneNote}.${lengthNote}${extra}`;
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: "You are a helpful assistant who writes great social media and marketing content." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.75
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("OpenAI API error:", data);
+      return res.status(response.status).json({ error: data });
+    }
+
+    const content = data.choices?.[0]?.message?.content?.trim();
+
+    const results = content
+      .split(/\n{2,}/)
+      .map(p => p.replace(/^\d+\.\s*/, '').trim())
+      .filter(p => p);
+
+    return res.status(200).json({ output: results.length ? results : [content] });
+  } catch (err) {
+    console.error("Server error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+}
