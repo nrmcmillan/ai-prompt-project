@@ -3,9 +3,42 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { category, topic, tone, count = 1, addHashtags, addEmojis, mode, original } = req.body;
+  const {
+    category,
+    topic,
+    tone,
+    count = 1,
+    addHashtags,
+    addEmojis,
+    mode,
+    original,
+    length = 'default'
+  } = req.body;
 
-  const extra = `${addHashtags ? ' Include relevant hashtags.' : ''}${addEmojis ? ' Add emojis where appropriate.' : ''}`;
+  // Add hashtags/emojis instructions
+  let extra = '';
+  if (addHashtags) extra += ' Include relevant hashtags.';
+  if (addEmojis) extra += ' Add emojis where appropriate.';
+
+  // Add length instructions based on slider
+  switch (length) {
+    case 'very short':
+      extra += ' Limit response to a very brief sentence or phrase.';
+      break;
+    case 'shorter':
+      extra += ' Keep the response concise and brief.';
+      break;
+    case 'longer':
+      extra += ' Provide more explanation and detail than usual.';
+      break;
+    case 'very long':
+      extra += ' Write a rich, detailed, and expanded version with multiple ideas.';
+      break;
+    case 'default':
+    default:
+      // No extra instructions needed
+      break;
+  }
 
   let prompt = "";
 
@@ -47,6 +80,7 @@ export default async function handler(req, res) {
 
     const splitOutput = content.split(/\n{2,}/).filter(p => p.trim().length > 0);
     return res.status(200).json({ output: splitOutput });
+
   } catch (err) {
     console.error("Server error:", err);
     return res.status(500).json({ error: 'Internal Server Error' });

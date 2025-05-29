@@ -55,7 +55,7 @@
       color: var(--muted);
     }
 
-    select, input {
+    select, input[type="text"], input[list] {
       width: 100%;
       padding: 0.75rem;
       margin-top: 0.5rem;
@@ -129,10 +129,6 @@
       transform: translateX(18px);
     }
 
-    .slider.round {
-      border-radius: 34px;
-    }
-
     .generate-button {
       display: block;
       margin: 2rem auto 0;
@@ -169,24 +165,11 @@
       position: relative;
     }
 
-    .improved {
-      background-color: #e0f7fa;
-      margin-top: 1rem;
-      padding: 1rem;
-      border-radius: 5px;
-      border: 1px dashed #4f46e5;
-    }
-
     @keyframes fadeIn {
       to {
         opacity: 1;
         transform: translateY(0);
       }
-    }
-
-    .copy-btn, .improve-btn {
-      font-size: 0.8rem;
-      padding: 0.3rem 0.7rem;
     }
 
     .spinner {
@@ -203,6 +186,12 @@
       to {
         transform: rotate(360deg);
       }
+    }
+
+    input[type=range] {
+      width: 100%;
+      margin-top: 0.5rem;
+      margin-bottom: 0.3rem;
     }
 
     .footer-note {
@@ -242,6 +231,12 @@
       <option value="Confident">
     </datalist>
 
+    <label for="lengthSlider">Response Length</label>
+    <input type="range" id="lengthSlider" min="1" max="5" value="3" />
+    <div id="lengthLabel" style="text-align:center; margin-bottom:1.5rem; color: var(--muted); font-size: 0.9rem;">
+      Default
+    </div>
+
     <label for="count">Number of Variants</label>
     <select id="count">
       <option value="1" selected>1</option>
@@ -275,5 +270,69 @@
 
     <div class="footer-note">Powered by OpenAI · Built with ♥ by You</div>
   </div>
+
+  <script>
+    const slider = document.getElementById("lengthSlider");
+    const label = document.getElementById("lengthLabel");
+
+    const lengthMap = {
+      1: "very short",
+      2: "shorter",
+      3: "default",
+      4: "longer",
+      5: "very long"
+    };
+
+    const labelMap = {
+      1: "Very Short",
+      2: "Short",
+      3: "Default",
+      4: "Long",
+      5: "Very Long"
+    };
+
+    slider.addEventListener("input", () => {
+      label.textContent = labelMap[slider.value];
+    });
+
+    async function generate() {
+      const category = document.getElementById("category").value;
+      const topic = document.getElementById("topic").value;
+      const tone = document.getElementById("tone").value;
+      const count = document.getElementById("count").value;
+      const addHashtags = document.getElementById("addHashtags").checked;
+      const addEmojis = document.getElementById("addEmojis").checked;
+      const length = lengthMap[slider.value];
+
+      const output = document.getElementById("output");
+      output.innerHTML = '<div class="spinner"></div>';
+
+      const response = await fetch("/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          category,
+          topic,
+          tone,
+          count,
+          addHashtags,
+          addEmojis,
+          length
+        }),
+      });
+
+      const data = await response.json();
+      output.innerHTML = "";
+
+      data.output.forEach((result) => {
+        const box = document.createElement("div");
+        box.className = "prompt-box";
+        box.textContent = result;
+        output.appendChild(box);
+      });
+    }
+  </script>
 </body>
 </html>
