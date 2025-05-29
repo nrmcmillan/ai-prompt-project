@@ -1,66 +1,48 @@
-// generate.js
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-import { IncomingForm } from 'formidable';
-import fs from 'fs';
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const form = new IncomingForm({ keepExtensions: true });
+  const { category, topic, tone, count = 3 } = req.body;
 
-  form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(400).json({ error: 'Form parsing error' });
+  if (!topic || !category) {
+    return res.status(400).json({ error: 'Missing topic or category' });
+  }
 
-    const topic = fields.topic?.[0];
-    const tone = fields.tone?.[0];
-    const count = parseInt(fields.count?.[0] || '1');
-    const imageFile = files.image?.[0];
+  const prompt = `Write ${count} different ${category}s about "${topic}"${tone ? ` in a ${tone} tone` : ''}.`;
 
-    if (!imageFile || !topic) return res.status(400).json({ error: 'Missing image or topic' });
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: 'You are a helpful writing assistant.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.7
+      })
+    });
 
-    const imageBuffer = fs.readFileSync(imageFile.filepath);
-    const base64Image = imageBuffer.toString('base64');
+    const data = await response.json();
 
-    const prompt = `Write ${count} Instagram captions about "${topic}"${tone ? ` in a ${tone} tone` : ''}.`;
+    if (response.ok) {
+      const outputs = data.choices[0].message.content
+        .split(/\n(?=\d+\.)/)
+        .map(line => line.trim())
+        .filter(line => line);
 
-    try {
-      const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4-vision-preview',
-          messages: [
-            { role: 'user', content: [
-              { type: 'text', text: prompt },
-              { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}` } },
-            ]},
-          ],
-          max_tokens: 500,
-        }),
-      });
-
-      const data = await openaiRes.json();
-      if (openaiRes.ok) {
-        const output = data.choices[0].message.content.trim().split(/\n{2,}/);
-        return res.status(200).json({ output });
-      } else {
-        console.error('OpenAI error:', data);
-        return res.status(500).json({ error: 'OpenAI error' });
-      }
-    } catch (e) {
-      console.error('Server error:', e);
-      return res.status(500).json({ error: 'Internal server error' });
+      res.status(200).json({ output: outputs });
+    } else {
+      console.error('OpenAI error:', data);
+      res.status(response.status).json({ error: data });
     }
-  });
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 }
