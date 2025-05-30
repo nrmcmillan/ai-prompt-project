@@ -1,410 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Prompt Generator</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --primary-color: #4f46e5;
-      --primary-dark: #3730a3;
-      --background: #f9fafb;
-      --surface: #ffffff;
-      --border: #e5e7eb;
-      --text: #111827;
-      --muted: #6b7280;
-    }
+// ========================
+// generate.js (Backend)
+// ========================
 
-    * {
-      box-sizing: border-box;
-    }
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
-    body {
-      margin: 0;
-      padding: 2rem;
-      font-family: 'Inter', sans-serif;
-      background-color: var(--background);
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-    }
+  const {
+    category,
+    topic,
+    tone,
+    count = 1,
+    addHashtags,
+    addEmojis,
+    length,
+    mode,
+    original
+  } = req.body;
 
-    .container {
-      width: 100%;
-      max-width: 800px;
-      background-color: var(--surface);
-      padding: 2.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-    }
+  const extras = [
+    length ? ` Make it ${length}.` : '',
+    addHashtags ? ' Include relevant hashtags.' : '',
+    addEmojis ? ' Add emojis where appropriate.' : ''
+  ].join('');
 
-    h1 {
-      text-align: center;
-      font-size: 2rem;
-      color: var(--primary-color);
-      margin-bottom: 2rem;
-    }
+  let prompt = "";
 
-    label {
-      font-weight: 600;
-      margin-top: 1rem;
-      display: block;
-      color: var(--muted);
-    }
+  if (mode === "improve" && original) {
+    prompt = `Improve the following ${category} for the topic \"${topic}\"${tone ? ` in a ${tone} tone.` : '.'}${extras}\n\n\"${original}\"`;
+  } else {
+    prompt = `Write ${count} different ${category}s about \"${topic}\"${tone ? ` in a ${tone} tone.` : '.'}${extras}`;
+  }
 
-    select, input[type="text"], input[list] {
-      width: 100%;
-      padding: 0.75rem;
-      margin-top: 0.5rem;
-      margin-bottom: 1.5rem;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      font-size: 1rem;
-    }
-
-    input:focus, select:focus {
-      outline: none;
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-    }
-
-    input[type=range] {
-      width: 100%;
-      margin-top: 0.5rem;
-      margin-bottom: 0.3rem;
-    }
-
-    #lengthLabel {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .toggle-container {
-      display: flex;
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-      justify-content: center;
-    }
-
-    .toggle-group {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 40px;
-      height: 22px;
-    }
-
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      border-radius: 34px;
-      transition: 0.4s;
-    }
-
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 16px;
-      width: 16px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      border-radius: 50%;
-      transition: 0.4s;
-    }
-
-    input:checked + .slider {
-      background-color: var(--primary-color);
-    }
-
-    input:checked + .slider:before {
-      transform: translateX(18px);
-    }
-
-    .generate-button {
-      display: block;
-      margin: 2rem auto 0;
-      padding: 1rem 2rem;
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .generate-button:hover {
-      background-color: var(--primary-dark);
-    }
-
-    .output {
-      margin-top: 2rem;
-    }
-
-    .prompt-box {
-      background-color: #f1f5f9;
-      padding: 1.25rem;
-      border-radius: 8px;
-      margin-top: 1.5rem;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      border: 1px solid var(--border);
-      animation: fadeIn 0.6s ease forwards;
-      opacity: 0;
-      transform: translateY(10px);
-      position: relative;
-    }
-
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .spinner {
-      margin: 2rem auto;
-      width: 40px;
-      height: 40px;
-      border: 4px solid #ccc;
-      border-top-color: var(--primary-color);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .footer-note {
-      margin-top: 2rem;
-      text-align: center;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>AI Prompt Generator</h1>
-
-    <label for="category">Category</label>
-    <select id="category">
-      <option value="cold email">Cold Email</option>
-      <option value="instagram caption">Instagram Caption</option>
-      <option value="blog outline">Blog Outline</option>
-      <option value="seo description">SEO Description</option>
-      <option value="job cover letter">Job Cover Letter</option>
-    </select>
-
-    <label for="topic">Topic</label>
-    <input type="text" id="topic" placeholder="e.g., morning coffee, hiking in the Smokies, cozy winter vibes" />
-
-    <label for="tone">Tone <small style="color: var(--muted)">(optional)</small></label>
-    <input list="tone-options" id="tone" placeholder="e.g., Friendly" />
-    <datalist id="tone-options">
-      <option value="Friendly">
-      <option value="Professional">
-      <option value="Witty">
-      <option value="Inspiring">
-      <option value="Casual">
-      <option value="Persuasive">
-      <option value="Excited">
-      <option value="Confident">
-    </datalist>
-
-    <label for="lengthSlider">Response Length</label>
-    <input type="range" id="lengthSlider" min="1" max="5" value="3" />
-    <div id="lengthLabel">Default</div>
-
-    <label for="count">Number of Variants</label>
-    <select id="count">
-      <option value="1" selected>1</option>
-      <option value="2">2</option>
-      <option value="3">3</option>
-      <option value="4">4</option>
-      <option value="5">5</option>
-    </select>
-
-    <div class="toggle-container">
-      <div class="toggle-group">
-        <label class="switch">
-          <input type="checkbox" id="addHashtags" />
-          <span class="slider round"></span>
-        </label>
-        <span>Add Hashtags</span>
-      </div>
-
-      <div class="toggle-group">
-        <label class="switch">
-          <input type="checkbox" id="addEmojis" />
-          <span class="slider round"></span>
-        </label>
-        <span>Add Emojis</span>
-      </div>
-    </div>
-
-    <button class="generate-button" onclick="generate()">Generate Prompts</button>
-
-    <div class="output" id="output"></div>
-
-    <div class="footer-note">Powered by OpenAI · Built with ♥ by You</div>
-  </div>
-
-  <script>
-    const slider = document.getElementById("lengthSlider");
-    const label = document.getElementById("lengthLabel");
-
-    const labelMap = {
-      1: "Very Short",
-      2: "Short",
-      3: "Default",
-      4: "Long",
-      5: "Very Long"
-    };
-
-    const lengthMap = {
-      1: "very short",
-      2: "short",
-      3: "default",
-      4: "long",
-      5: "very long"
-    };
-
-    slider.addEventListener("input", () => {
-      label.textContent = labelMap[slider.value];
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: "You are a helpful creative writing assistant." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.75
+      })
     });
 
-    async function generate() {
-      const category = document.getElementById("category").value;
-      const topic = document.getElementById("topic").value;
-      const tone = document.getElementById("tone").value;
-      const count = parseInt(document.getElementById("count").value);
-      const addHashtags = document.getElementById("addHashtags").checked;
-      const addEmojis = document.getElementById("addEmojis").checked;
-      const length = lengthMap[slider.value];
-      const output = document.getElementById("output");
+    const data = await response.json();
 
-      output.innerHTML = '<div class="spinner"></div>';
-
-      try {
-        const response = await fetch("/api/generate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ category, topic, tone, count, addHashtags, addEmojis, length })
-        });
-
-        const data = await response.json();
-        output.innerHTML = "";
-
-        if (!response.ok || !data.output) {
-          output.innerHTML = `<div class="prompt-box">❌ ${data?.error?.message || 'Generation failed. Check console.'}</div>`;
-          console.error("API error:", data);
-          return;
-        }
-
-        const results = Array.isArray(data.output) ? data.output : [data.output];
-
-        results.forEach((text) => {
-          const box = document.createElement("div");
-          box.className = "prompt-box";
-          box.textContent = text;
-
-          const copyBtn = document.createElement("button");
-          copyBtn.textContent = "Copy";
-          copyBtn.className = "generate-button";
-          copyBtn.style.marginTop = "1rem";
-          copyBtn.style.padding = "0.4rem 0.75rem";
-          copyBtn.style.fontSize = "0.85rem";
-          copyBtn.onclick = () => {
-            navigator.clipboard.writeText(text);
-            copyBtn.textContent = "Copied!";
-            setTimeout(() => copyBtn.textContent = "Copy", 1500);
-          };
-
-          const improveBtn = document.createElement("button");
-          improveBtn.textContent = "Improve This";
-          improveBtn.className = "generate-button";
-          improveBtn.style.marginLeft = "0.75rem";
-          improveBtn.style.padding = "0.4rem 0.75rem";
-          improveBtn.style.fontSize = "0.85rem";
-          improveBtn.onclick = async () => {
-            improveBtn.disabled = true;
-            improveBtn.textContent = "Improving...";
-
-            try {
-              const improveRes = await fetch("/api/generate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  category,
-                  topic,
-                  tone,
-                  mode: "improve",
-                  original: text,
-                  addHashtags,
-                  addEmojis,
-                  length
-                })
-              });
-
-              const improved = await improveRes.json();
-              if (improved.output) {
-                const improvedBox = document.createElement("div");
-                improvedBox.className = "prompt-box";
-                improvedBox.style.backgroundColor = "#e0f7fa";
-                improvedBox.style.border = "1px dashed var(--primary-color)";
-                improvedBox.style.marginTop = "1rem";
-                improvedBox.textContent = improved.output;
-                box.appendChild(improvedBox);
-              } else {
-                alert("Improvement failed.");
-              }
-            } catch (e) {
-              alert("Improvement failed. Check console.");
-              console.error(e);
-            }
-
-            improveBtn.disabled = false;
-            improveBtn.textContent = "Improve This";
-          };
-
-          box.appendChild(copyBtn);
-          box.appendChild(improveBtn);
-          output.appendChild(box);
-        });
-      } catch (err) {
-        console.error("Fetch error:", err);
-        output.innerHTML = `<div class="prompt-box">❌ Network error. Check console for details.</div>`;
-      }
+    if (!response.ok) {
+      console.error("OpenAI API error:", data);
+      return res.status(response.status).json({ error: data });
     }
-  </script>
-</body>
-</html>
+
+    const content = data.choices?.[0]?.message?.content?.trim();
+
+    if (mode === "improve") {
+      return res.status(200).json({ output: content });
+    }
+
+    const variants = count === 1
+      ? [content]
+      : content.split(/\n(?=\d+\.\s)/).map(v => v.trim()).filter(v => v.length > 0);
+
+    return res.status(200).json({ output: variants });
+
+  } catch (err) {
+    console.error("Server error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+}
