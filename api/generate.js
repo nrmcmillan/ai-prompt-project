@@ -1,7 +1,3 @@
-// ========================
-// generate.js (Backend)
-// ========================
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -28,9 +24,9 @@ export default async function handler(req, res) {
   let prompt = "";
 
   if (mode === "improve" && original) {
-    prompt = `Improve the following ${category} for the topic \"${topic}\"${tone ? ` in a ${tone} tone.` : '.'}${extras}\n\n\"${original}\"`;
+    prompt = `Improve the following ${category} for the topic "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}\n\n"${original}"`;
   } else {
-    prompt = `Write ${count} different ${category}s about \"${topic}\"${tone ? ` in a ${tone} tone.` : '.'}${extras}`;
+    prompt = `Write ${count} different ${category}s about "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}`;
   }
 
   try {
@@ -63,11 +59,16 @@ export default async function handler(req, res) {
       return res.status(200).json({ output: content });
     }
 
-    const variants = count === 1
-      ? [content]
-      : content.split(/\n(?=\d+\.\s)/).map(v => v.trim()).filter(v => v.length > 0);
+    // Try to split by common dividers if multiple prompts requested
+    let variants = [content];
 
-    return res.status(200).json({ output: variants });
+    if (count > 1) {
+      variants = content.split(/\n{2,}(?=Subject:|---|\d+\.\s)/).map(v => v.trim()).filter(v => v);
+    }
+
+    return res.status(200).json({
+      output: variants
+    });
 
   } catch (err) {
     console.error("Server error:", err);
