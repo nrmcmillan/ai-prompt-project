@@ -336,9 +336,70 @@
           const box = document.createElement("div");
           box.className = "prompt-box";
           box.textContent = text;
+
+          const copyBtn = document.createElement("button");
+          copyBtn.textContent = "Copy";
+          copyBtn.className = "generate-button";
+          copyBtn.style.marginTop = "1rem";
+          copyBtn.style.padding = "0.4rem 0.75rem";
+          copyBtn.style.fontSize = "0.85rem";
+          copyBtn.onclick = () => {
+            navigator.clipboard.writeText(text);
+            copyBtn.textContent = "Copied!";
+            setTimeout(() => copyBtn.textContent = "Copy", 1500);
+          };
+
+          const improveBtn = document.createElement("button");
+          improveBtn.textContent = "Improve This";
+          improveBtn.className = "generate-button";
+          improveBtn.style.marginLeft = "0.75rem";
+          improveBtn.style.padding = "0.4rem 0.75rem";
+          improveBtn.style.fontSize = "0.85rem";
+          improveBtn.onclick = async () => {
+            improveBtn.disabled = true;
+            improveBtn.textContent = "Improving...";
+
+            try {
+              const improveRes = await fetch("/api/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  category,
+                  topic,
+                  tone,
+                  mode: "improve",
+                  original: text,
+                  addHashtags,
+                  addEmojis,
+                  length
+                })
+              });
+
+              const improved = await improveRes.json();
+              if (improved.output) {
+                const improvedBox = document.createElement("div");
+                improvedBox.className = "prompt-box";
+                improvedBox.style.backgroundColor = "#e0f7fa";
+                improvedBox.style.border = "1px dashed var(--primary-color)";
+                improvedBox.style.marginTop = "1rem";
+                improvedBox.textContent = improved.output;
+                box.appendChild(improvedBox);
+              } else {
+                alert("Improvement failed.");
+              }
+            } catch (e) {
+              alert("Improvement failed. Check console.");
+              console.error(e);
+            }
+
+            improveBtn.disabled = false;
+            improveBtn.textContent = "Improve This";
+          };
+
+          box.appendChild(copyBtn);
+          box.appendChild(improveBtn);
           output.appendChild(box);
         });
-
       } catch (err) {
         console.error("Fetch error:", err);
         output.innerHTML = `<div class="prompt-box">❌ Network error. Check console for details.</div>`;
