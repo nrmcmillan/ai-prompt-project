@@ -65,25 +65,6 @@
       font-size: 1rem;
     }
 
-    input:focus, select:focus {
-      outline: none;
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-    }
-
-    input[type=range] {
-      width: 100%;
-      margin-top: 0.5rem;
-      margin-bottom: 0.3rem;
-    }
-
-    #lengthLabel {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
     .toggle-container {
       display: flex;
       gap: 1.5rem;
@@ -156,10 +137,6 @@
       transition: background-color 0.3s ease;
     }
 
-    .generate-button:hover {
-      background-color: var(--primary-dark);
-    }
-
     .output {
       margin-top: 2rem;
     }
@@ -213,33 +190,20 @@
   <div class="container">
     <h1>AI Prompt Generator</h1>
 
-<label for="category">Category</label>
-<select id="category">
-  <option value="cold email">Cold Email</option>
-  <option value="instagram caption">Instagram Caption</option>
-  <option value="blog outline">Blog Outline</option>
-  <option value="seo description">SEO Description</option>
-  <option value="job cover letter">Job Cover Letter</option>
-  <option value="product description">Product Description</option>
-  <option value="facebook ad copy">Ad Copy (Facebook)</option>
-  <option value="google ad copy">Ad Copy (Google)</option>
-  <option value="youtube title">YouTube Video Title</option>
-  <option value="youtube intro">YouTube Script Intro</option>
-  <option value="linkedin post">LinkedIn Post</option>
-  <option value="tweet">Tweet</option>
-  <option value="tiktok caption">TikTok Caption</option>
-  <option value="newsletter subject">Newsletter Subject Line</option>
-  <option value="business bio">Business Bio</option>
-  <option value="testimonial">Testimonial Generator</option>
-  <option value="faq">FAQ Generator</option>
-</select>
-
+    <label for="category">Category</label>
+    <select id="category">
+      <option value="cold email">Cold Email</option>
+      <option value="instagram caption">Instagram Caption</option>
+      <option value="blog outline">Blog Outline</option>
+      <option value="seo description">SEO Description</option>
+      <option value="job cover letter">Job Cover Letter</option>
+    </select>
 
     <label for="topic">Topic</label>
-    <input type="text" id="topic" placeholder="e.g., morning coffee, hiking in the Smokies, cozy winter vibes" />
+    <input type="text" id="topic" placeholder="e.g., hiking, morning coffee, Spain trip" />
 
-    <label for="tone">Tone <small style="color: var(--muted)">(optional)</small></label>
-    <input list="tone-options" id="tone" placeholder="e.g., Friendly" />
+    <label for="tone">Tone (optional)</label>
+    <input list="tone-options" id="tone" placeholder="e.g., Witty" />
     <datalist id="tone-options">
       <option value="Friendly">
       <option value="Professional">
@@ -247,8 +211,6 @@
       <option value="Inspiring">
       <option value="Casual">
       <option value="Persuasive">
-      <option value="Excited">
-      <option value="Confident">
     </datalist>
 
     <label for="lengthSlider">Response Length</label>
@@ -268,24 +230,21 @@
       <div class="toggle-group">
         <label class="switch">
           <input type="checkbox" id="addHashtags" />
-          <span class="slider round"></span>
+          <span class="slider"></span>
         </label>
         <span>Add Hashtags</span>
       </div>
-
       <div class="toggle-group">
         <label class="switch">
           <input type="checkbox" id="addEmojis" />
-          <span class="slider round"></span>
+          <span class="slider"></span>
         </label>
         <span>Add Emojis</span>
       </div>
     </div>
 
     <button class="generate-button" onclick="generate()">Generate Prompts</button>
-
     <div class="output" id="output"></div>
-
     <div class="footer-note">Powered by OpenAI · Built with ♥ by You</div>
   </div>
 
@@ -343,7 +302,12 @@
           return;
         }
 
-        const results = Array.isArray(data.output) ? data.output : [data.output];
+        const results = Array.isArray(data.output)
+          ? data.output
+          : data.output
+              .split(/\n(?=\d+\.\s)/)
+              .map(p => p.trim())
+              .filter(p => p.length > 0);
 
         results.forEach((text) => {
           const box = document.createElement("div");
