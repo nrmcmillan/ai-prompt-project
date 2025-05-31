@@ -59,15 +59,14 @@ export default async function handler(req, res) {
       return res.status(200).json({ output: content });
     }
 
-    // Try to split by common dividers if multiple prompts requested
-    let variants = [content];
-
-    if (count > 1) {
-      variants = content.split(/\n{2,}(?=Subject:|---|\d+\.\s)/).map(v => v.trim()).filter(v => v);
-    }
+    // Remove unwanted separators and clean up
+    const variants = content
+      .split(/\n{2,}(?=Subject:|---|\d+\.\s)/)
+      .map(v => v.trim())
+      .filter(v => v.length > 30); // filters out empty or very short accidental splits
 
     return res.status(200).json({
-      output: variants
+      output: variants.length ? variants : [content] // fallback
     });
 
   } catch (err) {
