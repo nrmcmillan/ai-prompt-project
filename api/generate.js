@@ -63,10 +63,9 @@ export default async function handler(req, res) {
     }
 
     // Clean and split into separate variants (look for numbered items or breaks)
-    const variants = content
-      .split(/\n(?=\d+\.\s)/) // Split by "1. ", "2. ", etc.
-      .map(v => v.trim())
-      .filter(v => v.length > 0);
+   const rawVariants = count === 1 ? [content] : content.split(/\n\s*\n/); // split by double line breaks
+const variants = rawVariants.map(v => v.trim()).filter(v => v.length > 0);
+
 
     return res.status(200).json({
       output: count === 1 ? [content] : variants
