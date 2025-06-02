@@ -61,27 +61,29 @@ export default async function handler(req, res) {
       return res.status(200).json({ output: content });
     }
 
-    // ✅ Only split into variants if category needs it
-    const singleBlockCategories = ["cold email", "blog outline", "product description", "website copy"];
+    // ✅ Intelligent per-category variant splitting
+    const normalizedCategory = category.toLowerCase();
+    const singleBlockCategories = ["product description", "website copy"];
+    const numberedBlockCategories = ["cold email", "blog outline"];
     let variants = [];
 
-    if (count === 1 || singleBlockCategories.includes(category.toLowerCase())) {
+    if (count === 1) {
       variants = [content];
-    } else {
-      // Try numbered list
+    } else if (numberedBlockCategories.includes(normalizedCategory)) {
+      // Split by numbered sections (e.g. 1. Email  2. Email)
       variants = content.split(/\n(?=\d+\.\s)/);
-
-      // Fallback to double line breaks
+      variants = variants.map(v => v.trim()).filter(v => v.length > 0);
+    } else if (singleBlockCategories.includes(normalizedCategory)) {
+      variants = [content]; // No splitting
+    } else {
+      // Default splitting: numbered, then double line breaks, then bullet
+      variants = content.split(/\n(?=\d+\.\s)/);
       if (variants.length < count) {
         variants = content.split(/\n\s*\n/);
       }
-
-      // Final fallback: bullet or dashed items
       if (variants.length < count) {
         variants = content.split(/\n(?=[*-]|\d+\.)/);
       }
-
-      // Clean up
       variants = variants.map(v => v.trim()).filter(v => v.length > 0);
     }
 
