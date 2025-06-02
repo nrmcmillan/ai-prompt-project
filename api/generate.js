@@ -3,17 +3,21 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const {
-    category,
-    topic,
-    tone,
-    count = 1,
-    addHashtags,
-    addEmojis,
-    length,
-    mode,
-    original
-  } = req.body;
+let {
+  category,
+  topic,
+  tone,
+  count = 1,
+  addHashtags,
+  addEmojis,
+  length,
+  mode,
+  original
+} = req.body;
+
+addHashtags = addHashtags === true || addHashtags === 'true';
+addEmojis = addEmojis === true || addEmojis === 'true';
+
 
   const extras = [
     length ? ` Make it ${length}.` : '',
