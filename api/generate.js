@@ -1,11 +1,9 @@
-// ==== BACKEND: generate.js ====
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  let {
+  const {
     category,
     topic,
     tone,
@@ -17,10 +15,6 @@ export default async function handler(req, res) {
     original
   } = req.body;
 
-  // Normalize boolean values
-  addHashtags = addHashtags === true || addHashtags === 'true';
-  addEmojis = addEmojis === true || addEmojis === 'true';
-
   const extras = [
     length ? ` Make it ${length}.` : '',
     addHashtags ? ' Include relevant hashtags.' : '',
@@ -30,9 +24,9 @@ export default async function handler(req, res) {
   let prompt = "";
 
   if (mode === "improve" && original) {
-    prompt = `Improve the following ${category} for the topic \"${topic}\"${tone ? ` in a ${tone} tone.` : '.'}${extras}\n\n\"${original}\"`;
+    prompt = `Improve the following ${category} for the topic "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}\n\n"${original}"`;
   } else {
-    prompt = `Write ${count} different ${category}s about \"${topic}\"${tone ? ` in a ${tone} tone.` : '.'}${extras}`;
+    prompt = `Write ${count} different ${category}s about "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}`;
   }
 
   try {
@@ -40,7 +34,7 @@ export default async function handler(req, res) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}` // Make sure this is set in Vercel environment variables
       },
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
@@ -65,40 +59,18 @@ export default async function handler(req, res) {
       return res.status(200).json({ output: content });
     }
 
+    // Clean and split into separate variants (look for numbered items or breaks)
     const variants = content
-      .split(/\n(?=\d+\.\s)/) // split by numbered list (e.g., 1. , 2. )
+      .split(/\n(?=\d+\.\s)/) // Split by "1. ", "2. ", etc.
       .map(v => v.trim())
       .filter(v => v.length > 0);
 
     return res.status(200).json({
       output: count === 1 ? [content] : variants
     });
+
   } catch (err) {
     console.error("Server error:", err);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 }
-
-
-// ==== FRONTEND: section that sends request ====
-
-const addHashtags = document.getElementById("addHashtags").checked;
-const addEmojis = document.getElementById("addEmojis").checked;
-
-const body = {
-  category,
-  topic,
-  tone,
-  count,
-  addHashtags,
-  addEmojis,
-  length
-};
-
-const response = await fetch("/api/generate", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify(body)
-});
