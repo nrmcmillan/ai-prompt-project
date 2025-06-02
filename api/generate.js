@@ -28,7 +28,8 @@ export default async function handler(req, res) {
   if (mode === "improve" && original) {
     prompt = `Improve the following ${category} for the topic "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}\n\n"${original}"`;
   } else {
-    prompt = `Write ${count} different ${category}s about "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}`;
+    prompt = `Write ${count} different ${category}s about "${topic}"${tone ? ` in a ${tone} tone.` : '.'} Number each one clearly. ${extras}`;
+
   }
 
   try {
