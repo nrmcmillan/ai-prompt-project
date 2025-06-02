@@ -372,10 +372,26 @@ const language = document.getElementById("language").value;
 
         const results = data.output;
 
-        results.forEach((text) => {
-          const box = document.createElement("div");
-          box.className = "prompt-box";
-          box.textContent = text;
+        results.forEach((text, index) => {
+  const box = document.createElement("div");
+  box.className = "prompt-box";
+
+  // Create number label (not copyable)
+  const numberLabel = document.createElement("div");
+  numberLabel.className = "variant-number";
+  numberLabel.textContent = `${index + 1}.`;
+  numberLabel.style.fontWeight = "bold";
+  numberLabel.style.marginBottom = "0.5rem";
+
+  // Create actual content container (copyable)
+  const contentDiv = document.createElement("div");
+  contentDiv.className = "prompt-content";
+  contentDiv.textContent = text;
+
+  // Add everything to the box
+  box.appendChild(numberLabel);
+  box.appendChild(contentDiv);
+
 
           const copyBtn = document.createElement("button");
           copyBtn.textContent = "Copy";
