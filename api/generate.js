@@ -65,9 +65,30 @@ export default async function handler(req, res) {
     const singleBlockCategories = ["cold email", "blog outline", "product description", "website copy"];
     let variants = [];
 
-    if (count === 1 || singleBlockCategories.includes(category.toLowerCase())) {
-      variants = [content];
-    } else {
+    const normalizedCategory = category.toLowerCase();
+const singleBlockCategories = ["product description", "website copy"];
+const numberedBlockCategories = ["cold email", "blog outline"];
+
+if (count === 1) {
+  variants = [content];
+} else if (numberedBlockCategories.includes(normalizedCategory)) {
+  // Split by numbered sections only (e.g. 1. Email, 2. Email)
+  variants = content.split(/\n(?=\d+\.\s)/);
+  variants = variants.map(v => v.trim()).filter(v => v.length > 0);
+} else if (singleBlockCategories.includes(normalizedCategory)) {
+  variants = [content]; // Don’t split
+} else {
+  // Default: try numbered list, then paragraphs, then bullets
+  variants = content.split(/\n(?=\d+\.\s)/);
+  if (variants.length < count) {
+    variants = content.split(/\n\s*\n/);
+  }
+  if (variants.length < count) {
+    variants = content.split(/\n(?=[*-]|\d+\.)/);
+  }
+  variants = variants.map(v => v.trim()).filter(v => v.length > 0);
+}
+
       // Try numbered list
       variants = content.split(/\n(?=\d+\.\s)/);
 
