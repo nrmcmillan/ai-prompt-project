@@ -63,8 +63,29 @@ export default async function handler(req, res) {
     }
 
     // Clean and split into separate variants (look for numbered items or breaks)
-   const rawVariants = count === 1 ? [content] : content.split(/\n\s*\n/); // split by double line breaks
-const variants = rawVariants.map(v => v.trim()).filter(v => v.length > 0);
+let variants = [];
+
+// If it's only 1 variant requested, skip splitting
+if (count === 1) {
+  variants = [content];
+} else {
+  // First try splitting on numbered format (e.g., 1. 2. 3.)
+  if (content.match(/\n\d+\.\s/)) {
+    variants = content.split(/\n(?=\d+\.\s)/);
+  } else {
+    // Otherwise, split by paragraph (double line breaks)
+    variants = content.split(/\n\s*\n/);
+  }
+
+  // Fallback: if still not enough variants, try splitting on bullets or dashes
+  if (variants.length < count) {
+    variants = content.split(/\n(?=[*-]|\d+\.)/);
+  }
+
+  // Final cleanup
+  variants = variants.map(v => v.trim()).filter(v => v.length > 0);
+}
+
 
 
     return res.status(200).json({
