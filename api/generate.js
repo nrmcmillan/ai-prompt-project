@@ -61,13 +61,14 @@ export default async function handler(req, res) {
       return res.status(200).json({ output: content });
     }
 
-    // ✅ Smart variant splitting logic
+    // ✅ Only split into variants if category needs it
+    const singleBlockCategories = ["cold email", "blog outline", "product description", "website copy"];
     let variants = [];
 
-    if (count === 1) {
+    if (count === 1 || singleBlockCategories.includes(category.toLowerCase())) {
       variants = [content];
     } else {
-      // Try numbered list (1. ... 2. ...)
+      // Try numbered list
       variants = content.split(/\n(?=\d+\.\s)/);
 
       // Fallback to double line breaks
@@ -75,12 +76,12 @@ export default async function handler(req, res) {
         variants = content.split(/\n\s*\n/);
       }
 
-      // Final fallback: bullets or dash lines
+      // Final fallback: bullet or dashed items
       if (variants.length < count) {
         variants = content.split(/\n(?=[*-]|\d+\.)/);
       }
 
-      // Clean up variants
+      // Clean up
       variants = variants.map(v => v.trim()).filter(v => v.length > 0);
     }
 
