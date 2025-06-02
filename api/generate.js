@@ -28,8 +28,7 @@ export default async function handler(req, res) {
   if (mode === "improve" && original) {
     prompt = `Improve the following ${category} for the topic "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}\n\n"${original}"`;
   } else {
-    prompt = `Write ${count} different ${category}s about "${topic}"${tone ? ` in a ${tone} tone.` : '.'} Number each one clearly. ${extras}`;
-
+    prompt = `Write ${count} different ${category}s about "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}`;
   }
 
   try {
@@ -76,20 +75,15 @@ if (count === 1) {
 } else if (singleBlockCategories.includes(normalizedCategory)) {
   variants = [content];
 } else {
-  // Try numbered list
-  variants = content.split(/\n(?=\d+\.\s)/).map(v => v.trim()).filter(v => v.length > 0);
-
-  // Fallback to double line breaks only if still 1 block
-  if (variants.length <= 1) {
-    variants = content.split(/\n\s*\n/).map(v => v.trim()).filter(v => v.length > 0);
+  variants = content.split(/\n(?=\d+\.\s)/);
+  if (variants.length < count) {
+    variants = content.split(/\n\s*\n/);
   }
-
-  // Final fallback to bullet/dash format
-  if (variants.length <= 1) {
-    variants = content.split(/\n(?=[*-]|\d+\.)/).map(v => v.trim()).filter(v => v.length > 0);
+  if (variants.length < count) {
+    variants = content.split(/\n(?=[*-]|\d+\.)/);
   }
+  variants = variants.map(v => v.trim()).filter(v => v.length > 0);
 }
-
 
 return res.status(200).json({
   output: variants
