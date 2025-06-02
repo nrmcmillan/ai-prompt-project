@@ -65,6 +65,36 @@
       font-size: 1rem;
     }
 
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+
+    input[type=range] {
+      width: 100%;
+      margin-top: 0.5rem;
+      margin-bottom: 0.3rem;
+    }
+
+    #lengthLabel {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .inline-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .inline-controls > div {
+      flex: 1;
+    }
+
     .toggle-container {
       display: flex;
       gap: 1.5rem;
@@ -137,6 +167,10 @@
       transition: background-color 0.3s ease;
     }
 
+    .generate-button:hover {
+      background-color: var(--primary-dark);
+    }
+
     .output {
       margin-top: 2rem;
     }
@@ -190,31 +224,21 @@
   <div class="container">
     <h1>AI Prompt Generator</h1>
 
- <label for="category">Category</label>
-<input list="category-options" id="category" placeholder="e.g., Instagram Caption" />
-<datalist id="category-options">
-  <option value="Cold Email">
-  <option value="Instagram Caption">
-  <option value="Blog Outline">
-  <option value="SEO Description">
-  <option value="Job Cover Letter">
-  <option value="Product Description">
-  <option value="Ad Copy">
-  <option value="YouTube Title">
-  <option value="Tweet">
-  <option value="Testimonial">
-  <option value="FAQ Answer">
-  <option value="Headline">
-  <option value="Call to Action">
-</datalist>
-
-
+    <label for="category">Category</label>
+    <select id="category">
+      <option value="cold email">Cold Email</option>
+      <option value="instagram caption">Instagram Caption</option>
+      <option value="blog outline">Blog Outline</option>
+      <option value="seo description">SEO Description</option>
+      <option value="job cover letter">Job Cover Letter</option>
+      <option value="custom">Custom</option>
+    </select>
 
     <label for="topic">Topic</label>
-    <input type="text" id="topic" placeholder="e.g., hiking, morning coffee, Spain trip" />
+    <input type="text" id="topic" placeholder="e.g., hiking in the Smokies, cozy winter vibes" />
 
-    <label for="tone">Tone (optional)</label>
-    <input list="tone-options" id="tone" placeholder="e.g., Witty" />
+    <label for="tone">Tone <small style="color: var(--muted)">(optional)</small></label>
+    <input list="tone-options" id="tone" placeholder="e.g., Friendly" />
     <datalist id="tone-options">
       <option value="Friendly">
       <option value="Professional">
@@ -222,39 +246,49 @@
       <option value="Inspiring">
       <option value="Casual">
       <option value="Persuasive">
+      <option value="Excited">
+      <option value="Confident">
     </datalist>
 
-    <label for="lengthSlider">Response Length</label>
-    <input type="range" id="lengthSlider" min="1" max="5" value="3" />
-    <div id="lengthLabel">Default</div>
+    <div class="inline-controls">
+      <div>
+        <label for="lengthSlider">Response Length</label>
+        <input type="range" id="lengthSlider" min="1" max="5" value="3" />
+        <div id="lengthLabel">Default</div>
+      </div>
 
-    <label for="count">Number of Variants</label>
-    <select id="count">
-      <option value="1" selected>1</option>
-      <option value="2">2</option>
-      <option value="3">3</option>
-      <option value="4">4</option>
-      <option value="5">5</option>
-    </select>
+      <div>
+        <label for="count">Variants</label>
+        <select id="count">
+          <option value="1" selected>1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </div>
+    </div>
 
     <div class="toggle-container">
       <div class="toggle-group">
         <label class="switch">
           <input type="checkbox" id="addHashtags" />
-          <span class="slider"></span>
+          <span class="slider round"></span>
         </label>
         <span>Add Hashtags</span>
       </div>
+
       <div class="toggle-group">
         <label class="switch">
           <input type="checkbox" id="addEmojis" />
-          <span class="slider"></span>
+          <span class="slider round"></span>
         </label>
         <span>Add Emojis</span>
       </div>
     </div>
 
     <button class="generate-button" onclick="generate()">Generate Prompts</button>
+
     <div class="output" id="output"></div>
     <div class="footer-note">Powered by OpenAI · Built with ♥ by You</div>
   </div>
@@ -313,12 +347,7 @@
           return;
         }
 
-        const results = Array.isArray(data.output)
-          ? data.output
-          : data.output
-              .split(/\n(?=\d+\.\s)/)
-              .map(p => p.trim())
-              .filter(p => p.length > 0);
+        const results = data.output;
 
         results.forEach((text) => {
           const box = document.createElement("div");

@@ -1,23 +1,25 @@
+// ==== BACKEND: generate.js ====
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-let {
-  category,
-  topic,
-  tone,
-  count = 1,
-  addHashtags,
-  addEmojis,
-  length,
-  mode,
-  original
-} = req.body;
+  let {
+    category,
+    topic,
+    tone,
+    count = 1,
+    addHashtags,
+    addEmojis,
+    length,
+    mode,
+    original
+  } = req.body;
 
-addHashtags = addHashtags === true || addHashtags === 'true';
-addEmojis = addEmojis === true || addEmojis === 'true';
-
+  // Normalize boolean values
+  addHashtags = addHashtags === true || addHashtags === 'true';
+  addEmojis = addEmojis === true || addEmojis === 'true';
 
   const extras = [
     length ? ` Make it ${length}.` : '',
@@ -28,9 +30,9 @@ addEmojis = addEmojis === true || addEmojis === 'true';
   let prompt = "";
 
   if (mode === "improve" && original) {
-    prompt = `Improve the following ${category} for the topic "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}\n\n"${original}"`;
+    prompt = `Improve the following ${category} for the topic \"${topic}\"${tone ? ` in a ${tone} tone.` : '.'}${extras}\n\n\"${original}\"`;
   } else {
-    prompt = `Write ${count} different ${category}s about "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}`;
+    prompt = `Write ${count} different ${category}s about \"${topic}\"${tone ? ` in a ${tone} tone.` : '.'}${extras}`;
   }
 
   try {
@@ -63,18 +65,40 @@ addEmojis = addEmojis === true || addEmojis === 'true';
       return res.status(200).json({ output: content });
     }
 
-    // Remove unwanted separators and clean up
     const variants = content
-      .split(/\n{2,}(?=Subject:|---|\d+\.\s)/)
+      .split(/\n(?=\d+\.\s)/) // split by numbered list (e.g., 1. , 2. )
       .map(v => v.trim())
-      .filter(v => v.length > 30); // filters out empty or very short accidental splits
+      .filter(v => v.length > 0);
 
     return res.status(200).json({
-      output: variants.length ? variants : [content] // fallback
+      output: count === 1 ? [content] : variants
     });
-
   } catch (err) {
     console.error("Server error:", err);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 }
+
+
+// ==== FRONTEND: section that sends request ====
+
+const addHashtags = document.getElementById("addHashtags").checked;
+const addEmojis = document.getElementById("addEmojis").checked;
+
+const body = {
+  category,
+  topic,
+  tone,
+  count,
+  addHashtags,
+  addEmojis,
+  length
+};
+
+const response = await fetch("/api/generate", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify(body)
+});
