@@ -4,25 +4,24 @@ export default async function handler(req, res) {
   }
 
   const {
-  category,
-  topic,
-  tone,
-  count = 1,
-  addHashtags,
-  addEmojis,
-  length,
-  language = "English",
-  mode,
-  original
-} = req.body;
+    category,
+    topic,
+    tone,
+    count = 1,
+    addHashtags,
+    addEmojis,
+    length,
+    language = "English",
+    mode,
+    original
+  } = req.body;
 
   const extras = [
-  length ? ` Make it ${length}.` : '',
-  addHashtags ? ' Include relevant hashtags.' : '',
-  addEmojis ? ' Add emojis where appropriate.' : '',
-  language && language !== 'English' ? ` Write it in ${language}.` : ''
-].join('');
-
+    length ? ` Make it ${length}.` : '',
+    addHashtags ? ' Include relevant hashtags.' : '',
+    addEmojis ? ' Add emojis where appropriate.' : '',
+    language && language !== 'English' ? ` Write it in ${language}.` : ''
+  ].join('');
 
   let prompt = "";
 
@@ -37,7 +36,7 @@ export default async function handler(req, res) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}` // Make sure this is set in Vercel environment variables
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
@@ -62,34 +61,31 @@ export default async function handler(req, res) {
       return res.status(200).json({ output: content });
     }
 
-    // Clean and split into separate variants (look for numbered items or breaks)
-let variants = [];
+    // ✅ Smart variant splitting logic
+    let variants = [];
 
-// If it's only 1 variant requested, skip splitting
-if (count === 1) {
-  variants = [content];
-} else {
-  // First try splitting on numbered format (e.g., 1. 2. 3.)
-  if (content.match(/\n\d+\.\s/)) {
-    variants = content.split(/\n(?=\d+\.\s)/);
-  } else {
-    // Otherwise, split by paragraph (double line breaks)
-    variants = content.split(/\n\s*\n/);
-  }
+    if (count === 1) {
+      variants = [content];
+    } else {
+      // Try numbered list (1. ... 2. ...)
+      variants = content.split(/\n(?=\d+\.\s)/);
 
-  // Fallback: if still not enough variants, try splitting on bullets or dashes
-  if (variants.length < count) {
-    variants = content.split(/\n(?=[*-]|\d+\.)/);
-  }
+      // Fallback to double line breaks
+      if (variants.length < count) {
+        variants = content.split(/\n\s*\n/);
+      }
 
-  // Final cleanup
-  variants = variants.map(v => v.trim()).filter(v => v.length > 0);
-}
+      // Final fallback: bullets or dash lines
+      if (variants.length < count) {
+        variants = content.split(/\n(?=[*-]|\d+\.)/);
+      }
 
-
+      // Clean up variants
+      variants = variants.map(v => v.trim()).filter(v => v.length > 0);
+    }
 
     return res.status(200).json({
-      output: count === 1 ? [content] : variants
+      output: variants
     });
 
   } catch (err) {
