@@ -1,96 +1,127 @@
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+async function generate() {
+  const category = document.getElementById("category").value;
+  const topic = document.getElementById("topic").value;
+  const tone = document.getElementById("tone").value;
+  const language = document.getElementById("language").value;
+  const count = parseInt(document.getElementById("count").value);
+  const addHashtags = document.getElementById("addHashtags").checked;
+  const addEmojis = document.getElementById("addEmojis").checked;
+  const length = lengthMap[slider.value];
+  const output = document.getElementById("output");
 
-  const {
-    category,
-    topic,
-    tone,
-    count = 1,
-    addHashtags,
-    addEmojis,
-    length,
-    language = "English",
-    mode,
-    original
-  } = req.body;
-
-  const extras = [
-    length ? ` Make it ${length}.` : '',
-    addHashtags ? ' Include relevant hashtags.' : '',
-    addEmojis ? ' Add emojis where appropriate.' : '',
-    language && language !== 'English' ? ` Write it in ${language}.` : ''
-  ].join('');
-
-  let prompt = "";
-
-  if (mode === "improve" && original) {
-    prompt = `Improve the following ${category} for the topic "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}\n\n"${original}"`;
-  } else {
-    prompt = `Write ${count} different ${category}s about "${topic}"${tone ? ` in a ${tone} tone.` : '.'}${extras}`;
-  }
+  output.innerHTML = '<div class="spinner"></div>';
 
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("/api/generate", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: "You are a helpful creative writing assistant." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.75
-      })
+      body: JSON.stringify({ category, topic, tone, count, addHashtags, addEmojis, length, language })
     });
 
     const data = await response.json();
+    output.innerHTML = "";
 
-    if (!response.ok) {
-      console.error("OpenAI API error:", data);
-      return res.status(response.status).json({ error: data });
+    if (!response.ok || !data.output) {
+      output.innerHTML = `<div class="prompt-box">❌ ${data?.error?.message || 'Generation failed. Check console.'}</div>`;
+      console.error("API error:", data);
+      return;
     }
 
-    const content = data.choices?.[0]?.message?.content?.trim();
+    const results = data.output;
 
-    if (mode === "improve") {
-      return res.status(200).json({ output: content });
-    }
+    results.forEach((text, index) => {
+      const box = document.createElement("div");
+      box.className = "prompt-box";
 
-    // ✅ Intelligent per-category variant splitting
-   const normalizedCategory = category.toLowerCase();
-const singleBlockCategories = ["product description", "website copy"];
-const numberedBlockCategories = ["cold email", "blog outline"];
-let variants = [];
+      // Remove GPT-generated numbers like "1. " at the start
+      text = text.replace(/^\d+\.\s*/, "");
 
-if (count === 1) {
-  variants = [content];
-} else if (numberedBlockCategories.includes(normalizedCategory)) {
-  variants = content.split(/\n(?=\d+\.\s)/); // <-- this is important
-  variants = variants.map(v => v.trim()).filter(v => v.length > 0);
-} else if (singleBlockCategories.includes(normalizedCategory)) {
-  variants = [content];
-} else {
-  variants = content.split(/\n(?=\d+\.\s)/);
-  if (variants.length < count) {
-    variants = content.split(/\n\s*\n/);
-  }
-  if (variants.length < count) {
-    variants = content.split(/\n(?=[*-]|\d+\.)/);
-  }
-  variants = variants.map(v => v.trim()).filter(v => v.length > 0);
-}
+      // Custom number label
+      const numberLabel = document.createElement("div");
+      numberLabel.className = "variant-number";
+      numberLabel.textContent = `${index + 1}.`;
+      numberLabel.style.fontWeight = "bold";
+      numberLabel.style.marginBottom = "0.5rem";
 
-return res.status(200).json({
-  output: variants
-});
+      // Actual variant content
+      const contentDiv = document.createElement("div");
+      contentDiv.className = "prompt-content";
+      contentDiv.textContent = text;
+
+      // Copy Button
+      const copyBtn = document.createElement("button");
+      copyBtn.textContent = "Copy";
+      copyBtn.className = "generate-button";
+      copyBtn.style.marginTop = "1rem";
+      copyBtn.style.padding = "0.4rem 0.75rem";
+      copyBtn.style.fontSize = "0.85rem";
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(contentDiv.textContent); // Only copies clean content
+        copyBtn.textContent = "Copied!";
+        setTimeout(() => copyBtn.textContent = "Copy", 1500);
+      };
+
+      // Improve Button
+      const improveBtn = document.createElement("button");
+      improveBtn.textContent = "Improve This";
+      improveBtn.className = "generate-button";
+      improveBtn.style.marginLeft = "0.75rem";
+      improveBtn.style.padding = "0.4rem 0.75rem";
+      improveBtn.style.fontSize = "0.85rem";
+      improveBtn.onclick = async () => {
+        improveBtn.disabled = true;
+        improveBtn.textContent = "Improving...";
+
+        try {
+          const improveRes = await fetch("/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              category,
+              topic,
+              tone,
+              mode: "improve",
+              original: text,
+              addHashtags,
+              addEmojis,
+              length,
+              language
+            })
+          });
+
+          const improved = await improveRes.json();
+          if (improved.output) {
+            const improvedBox = document.createElement("div");
+            improvedBox.className = "prompt-box";
+            improvedBox.style.backgroundColor = "#e0f7fa";
+            improvedBox.style.border = "1px dashed var(--primary-color)";
+            improvedBox.style.marginTop = "1rem";
+            improvedBox.textContent = improved.output;
+            box.appendChild(improvedBox);
+          } else {
+            alert("Improvement failed.");
+          }
+        } catch (e) {
+          alert("Improvement failed. Check console.");
+          console.error(e);
+        }
+
+        improveBtn.disabled = false;
+        improveBtn.textContent = "Improve This";
+      };
+
+      // Assemble and add to DOM
+      box.appendChild(numberLabel);
+      box.appendChild(contentDiv);
+      box.appendChild(copyBtn);
+      box.appendChild(improveBtn);
+      output.appendChild(box);
+    });
 
   } catch (err) {
-    console.error("Server error:", err);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error("Fetch error:", err);
+    output.innerHTML = `<div class="prompt-box">❌ Network error. Check console for details.</div>`;
   }
 }
