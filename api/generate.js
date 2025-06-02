@@ -75,15 +75,20 @@ if (count === 1) {
 } else if (singleBlockCategories.includes(normalizedCategory)) {
   variants = [content];
 } else {
-  variants = content.split(/\n(?=\d+\.\s)/);
-  if (variants.length < count) {
-    variants = content.split(/\n\s*\n/);
+  // Try numbered list
+  variants = content.split(/\n(?=\d+\.\s)/).map(v => v.trim()).filter(v => v.length > 0);
+
+  // Fallback to double line breaks only if still 1 block
+  if (variants.length <= 1) {
+    variants = content.split(/\n\s*\n/).map(v => v.trim()).filter(v => v.length > 0);
   }
-  if (variants.length < count) {
-    variants = content.split(/\n(?=[*-]|\d+\.)/);
+
+  // Final fallback to bullet/dash format
+  if (variants.length <= 1) {
+    variants = content.split(/\n(?=[*-]|\d+\.)/).map(v => v.trim()).filter(v => v.length > 0);
   }
-  variants = variants.map(v => v.trim()).filter(v => v.length > 0);
 }
+
 
 return res.status(200).json({
   output: variants
