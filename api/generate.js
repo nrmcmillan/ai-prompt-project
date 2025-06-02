@@ -62,34 +62,32 @@ export default async function handler(req, res) {
     }
 
     // ✅ Intelligent per-category variant splitting
-    const normalizedCategory = category.toLowerCase();
-    const singleBlockCategories = ["product description", "website copy"];
-    const numberedBlockCategories = ["cold email", "blog outline"];
-    let variants = [];
+   const normalizedCategory = category.toLowerCase();
+const singleBlockCategories = ["product description", "website copy"];
+const numberedBlockCategories = ["cold email", "blog outline"];
+let variants = [];
 
-    if (count === 1) {
-      variants = [content];
-    } else if (numberedBlockCategories.includes(normalizedCategory)) {
-      // Split by numbered sections (e.g. 1. Email  2. Email)
-      variants = content.split(/\n(?=\d+\.\s)/);
-      variants = variants.map(v => v.trim()).filter(v => v.length > 0);
-    } else if (singleBlockCategories.includes(normalizedCategory)) {
-      variants = [content]; // No splitting
-    } else {
-      // Default splitting: numbered, then double line breaks, then bullet
-      variants = content.split(/\n(?=\d+\.\s)/);
-      if (variants.length < count) {
-        variants = content.split(/\n\s*\n/);
-      }
-      if (variants.length < count) {
-        variants = content.split(/\n(?=[*-]|\d+\.)/);
-      }
-      variants = variants.map(v => v.trim()).filter(v => v.length > 0);
-    }
+if (count === 1) {
+  variants = [content];
+} else if (numberedBlockCategories.includes(normalizedCategory)) {
+  variants = content.split(/\n(?=\d+\.\s)/); // <-- this is important
+  variants = variants.map(v => v.trim()).filter(v => v.length > 0);
+} else if (singleBlockCategories.includes(normalizedCategory)) {
+  variants = [content];
+} else {
+  variants = content.split(/\n(?=\d+\.\s)/);
+  if (variants.length < count) {
+    variants = content.split(/\n\s*\n/);
+  }
+  if (variants.length < count) {
+    variants = content.split(/\n(?=[*-]|\d+\.)/);
+  }
+  variants = variants.map(v => v.trim()).filter(v => v.length > 0);
+}
 
-    return res.status(200).json({
-      output: variants
-    });
+return res.status(200).json({
+  output: variants
+});
 
   } catch (err) {
     console.error("Server error:", err);
