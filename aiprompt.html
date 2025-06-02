@@ -190,14 +190,25 @@
   <div class="container">
     <h1>AI Prompt Generator</h1>
 
-    <label for="category">Category</label>
-    <select id="category">
-      <option value="cold email">Cold Email</option>
-      <option value="instagram caption">Instagram Caption</option>
-      <option value="blog outline">Blog Outline</option>
-      <option value="seo description">SEO Description</option>
-      <option value="job cover letter">Job Cover Letter</option>
-    </select>
+ <label for="category">Category</label>
+<input list="category-options" id="category" placeholder="e.g., Instagram Caption" />
+<datalist id="category-options">
+  <option value="Cold Email">
+  <option value="Instagram Caption">
+  <option value="Blog Outline">
+  <option value="SEO Description">
+  <option value="Job Cover Letter">
+  <option value="Product Description">
+  <option value="Ad Copy">
+  <option value="YouTube Title">
+  <option value="Tweet">
+  <option value="Testimonial">
+  <option value="FAQ Answer">
+  <option value="Headline">
+  <option value="Call to Action">
+</datalist>
+
+
 
     <label for="topic">Topic</label>
     <input type="text" id="topic" placeholder="e.g., hiking, morning coffee, Spain trip" />
