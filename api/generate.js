@@ -4,22 +4,25 @@ export default async function handler(req, res) {
   }
 
   const {
-    category,
-    topic,
-    tone,
-    count = 1,
-    addHashtags,
-    addEmojis,
-    length,
-    mode,
-    original
-  } = req.body;
+  category,
+  topic,
+  tone,
+  count = 1,
+  addHashtags,
+  addEmojis,
+  length,
+  language = "English",
+  mode,
+  original
+} = req.body;
 
   const extras = [
-    length ? ` Make it ${length}.` : '',
-    addHashtags ? ' Include relevant hashtags.' : '',
-    addEmojis ? ' Add emojis where appropriate.' : ''
-  ].join('');
+  length ? ` Make it ${length}.` : '',
+  addHashtags ? ' Include relevant hashtags.' : '',
+  addEmojis ? ' Add emojis where appropriate.' : '',
+  language && language !== 'English' ? ` Write it in ${language}.` : ''
+].join('');
+
 
   let prompt = "";
 

@@ -259,6 +259,19 @@
       <option value="Confident">
     </datalist>
 
+<label for="language">Language</label>
+<select id="language">
+  <option value="English" selected>English</option>
+  <option value="Spanish">Spanish</option>
+  <option value="French">French</option>
+  <option value="German">German</option>
+  <option value="Italian">Italian</option>
+  <option value="Portuguese">Portuguese</option>
+  <option value="Japanese">Japanese</option>
+  <option value="Korean">Korean</option>
+  <option value="Chinese">Chinese</option>
+</select>
+
     <div class="inline-controls">
       <div>
         <label for="lengthSlider">Response Length</label>
@@ -330,6 +343,7 @@
       const category = document.getElementById("category").value;
       const topic = document.getElementById("topic").value;
       const tone = document.getElementById("tone").value;
+const language = document.getElementById("language").value;
       const count = parseInt(document.getElementById("count").value);
       const addHashtags = document.getElementById("addHashtags").checked;
       const addEmojis = document.getElementById("addEmojis").checked;
@@ -344,7 +358,7 @@
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ category, topic, tone, count, addHashtags, addEmojis, length })
+          body: JSON.stringify({ category, topic, tone, count, addHashtags, addEmojis, length, language })
         });
 
         const data = await response.json();
@@ -389,16 +403,17 @@
               const improveRes = await fetch("/api/generate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  category,
-                  topic,
-                  tone,
-                  mode: "improve",
-                  original: text,
-                  addHashtags,
-                  addEmojis,
-                  length
-                })
+               body: JSON.stringify({
+  category,
+  topic,
+  tone,
+  mode: "improve",
+  original: text,
+  addHashtags,
+  addEmojis,
+  length,
+  language
+})
               });
 
               const improved = await improveRes.json();
